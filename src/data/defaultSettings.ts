@@ -1,0 +1,32 @@
+import { CafeSettings } from '../types';
+
+export const DEFAULT_SETTINGS: CafeSettings = {
+  cafeName: 'DAS CAFF',
+  tagline: 'TAX INVOICE / ORIGINAL',
+  address: 'D-MART ARENA-13 DEVARAYAPATNA , Hassan Town,',
+  cityStateZip: 'Hassan, Hassan, Karnataka - 573201',
+  phone: '8088624970',
+  email: 'dascaff.hassan@gmail.com',
+  gstin: '29AAZFD7704R1Z5',
+  gstNumber: '29AAZFD7704R1Z5',
+  fssaiNumber: '11223344005566',
+  cin: 'U55101KA2024PTC188920',
+  sac: '996331',
+  defaultGstRate: 5.0, // Standard restaurant GST (2.5% CGST + 2.5% SGST)
+  cgstRate: 2.5,
+  sgstRate: 2.5,
+  isGstEnabled: true,
+  invoicePrefix: 'INV-',
+  kotPrefix: 'KOT-',
+  termsAndConditions: '*** HAVE A DELICIOUS DAY ***',
+  currencySymbol: '₹',
+  printerWidth: '80mm',
+  thermalPaperWidth: '80mm',
+  autoCut: true,
+  autoCutPaper: true,
+  managerPassword: 'rakesh@das',
+  loginUsername: 'DASCAFF',
+  loginPassword: 'rakdas@098',
+  invoiceStartSeq: 1,
+  upiId: '8088624970@ybl',
+};

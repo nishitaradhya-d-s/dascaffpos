@@ -1,0 +1,6 @@
+{
+  "name": "DAS CAFF - Smart Cafe POS & GST Billing System",
+  "description": "Professional cafe POS and billing software with Customer (GST) bill, Owner (Non-GST) bill, KOT generation, direct Bluetooth thermal printing, live Raw Material inventory & recipe BOM auto-deductions, and monthly GST audit reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
