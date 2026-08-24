@@ -27,11 +27,7 @@ export function generateWhatsAppMessage(bill: BillRecord, settings: CafeSettings
   return `${customerGreeting}
 
 Thank you so much for visiting *${settings.cafeName}*! ❤️
-
-We hope you loved your food and had a wonderful dining experience with us today. It was an absolute pleasure serving you!
-
 ✨ *We look forward to welcoming you back again soon!* ✨
-Have a joyful and blessed day ahead!
 
 Warm regards,
 *Team ${settings.cafeName}*
