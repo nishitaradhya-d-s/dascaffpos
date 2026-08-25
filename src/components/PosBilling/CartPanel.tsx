@@ -7,8 +7,10 @@ import {
   SplitPayment, 
   BillRecord, 
   CafeSettings, 
-  TaxDetails 
+  TaxDetails,
+  CouponCode
 } from '../../types';
+import { getStoredCoupons } from '../../utils/storage';
 import { 
   ShoppingBag, 
   Trash2, 
@@ -25,7 +27,12 @@ import {
   QrCode, 
   Banknote, 
   CreditCard, 
-  PlusCircle 
+  PlusCircle,
+  Tag,
+  Settings as SettingsIcon,
+  Sparkles,
+  X,
+  AlertCircle
 } from 'lucide-react';
 
 interface CartPanelProps {
@@ -70,6 +77,63 @@ export const CartPanel: React.FC<CartPanelProps> = ({
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [flatDiscount, setFlatDiscount] = useState<string>('');
   const [isFlatDiscount, setIsFlatDiscount] = useState(false);
+  
+  // Dedicated Coupon Code State
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponCode | null>(null);
+  const [couponInputText, setCouponInputText] = useState('');
+  const [couponError, setCouponError] = useState<string | null>(null);
+
+  const handleApplyCouponCode = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setCouponError(null);
+
+    const cleanCode = couponInputText.trim().toUpperCase();
+    if (!cleanCode) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+
+    const stored = getStoredCoupons();
+    const found = stored.find((c) => c.code.toUpperCase() === cleanCode);
+
+    if (!found) {
+      setCouponError(`Invalid coupon code "${cleanCode}". Not found in menu catalog.`);
+      return;
+    }
+
+    if (!found.isActive) {
+      setCouponError(`Coupon "${cleanCode}" is currently disabled in Menu & Rates.`);
+      return;
+    }
+
+    if (found.minBillAmount && found.minBillAmount > 0 && subTotal < found.minBillAmount) {
+      setCouponError(`Coupon requires minimum bill amount of ₹${found.minBillAmount} (Current: ₹${subTotal.toFixed(2)})`);
+      return;
+    }
+
+    // Auto-apply discount based on configured rules in Menu & Rates
+    setAppliedCoupon(found);
+    if (found.type === 'percent') {
+      setIsFlatDiscount(false);
+      setDiscountPercent(found.value);
+      setFlatDiscount('');
+    } else {
+      setIsFlatDiscount(true);
+      setFlatDiscount(found.value.toString());
+      setDiscountPercent(0);
+    }
+
+    setCouponInputText('');
+    setCouponError(null);
+  };
+
+  const handleRemoveAppliedCoupon = () => {
+    setAppliedCoupon(null);
+    setIsFlatDiscount(false);
+    setDiscountPercent(0);
+    setFlatDiscount('');
+    setCouponError(null);
+  };
 
   // Payment Mode and Typed Amount
   const [paymentMode, setPaymentMode] = useState<PaymentMode>('Cash');
@@ -286,6 +350,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
       changeReturned: paymentBreakdown.change > 0 ? paymentBreakdown.change : undefined,
       status: 'Preparing',
       notes: orderNotes.trim() || undefined,
+      couponCode: appliedCoupon?.code || undefined,
       createdBy: 'Staff',
     };
   };
@@ -360,18 +425,25 @@ export const CartPanel: React.FC<CartPanelProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
           <div>
             <label className="block text-[10px] font-bold text-[#8B7E74] uppercase mb-1">
-              Table #
+              Table # {orderType !== 'Dine-In' && <span className="text-amber-600 font-normal lowercase">(not applicable)</span>}
             </label>
             <select
-              value={tableNumber}
+              value={orderType === 'Dine-In' ? tableNumber : ''}
+              disabled={orderType !== 'Dine-In'}
               onChange={(e) => setTableNumber(e.target.value)}
-              className="w-full bg-white border border-[#E0D7D0] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
+              className={`w-full bg-white border border-[#E0D7D0] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[#2D241E] focus:outline-hidden focus:border-[#4B3621] ${
+                orderType !== 'Dine-In' ? 'opacity-50 bg-[#F4F1EE] cursor-not-allowed text-[#8B7E74]' : ''
+              }`}
             >
-              {TABLES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
+              {orderType !== 'Dine-In' ? (
+                <option value="">N/A ({orderType})</option>
+              ) : (
+                TABLES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
@@ -583,73 +655,166 @@ export const CartPanel: React.FC<CartPanelProps> = ({
           )}
         </div>
 
-        {/* % DISCOUNT & OFFERS */}
-        <div className="bg-[#F9F7F5] border border-[#E0D7D0] rounded-xl p-2.5 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-[#4B3621] flex items-center gap-1">
-              <Percent className="w-3.5 h-3.5 text-[#4B3621]" />
-              <span>% DISCOUNT &amp; OFFERS:</span>
-            </span>
-            <span className="text-[11px] font-bold text-emerald-700 font-mono">
-              {taxDetails.discountAmount > 0 ? `-₹${taxDetails.discountAmount.toFixed(2)}` : 'No Discount'}
-            </span>
-          </div>
+        {/* MANUAL % / FLAT DISCOUNT (Toggled Separately in Settings) */}
+        {settings.isDiscountEnabled !== false && (
+          <div className="bg-[#F9F7F5] border border-[#E0D7D0] rounded-xl p-2.5 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-[#4B3621] flex items-center gap-1">
+                <Percent className="w-3.5 h-3.5 text-[#4B3621]" />
+                <span>MANUAL DISCOUNT:</span>
+              </span>
+              <span className="text-[11px] font-bold text-emerald-700 font-mono">
+                {taxDetails.discountAmount > 0 && !appliedCoupon
+                  ? `-₹${taxDetails.discountAmount.toFixed(2)}`
+                  : 'No Discount'}
+              </span>
+            </div>
 
-          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-            {[0, 5, 10, 15, 20, 25, 50].map((p) => {
-              const isSelected = !isFlatDiscount && discountPercent === p;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => {
+            {/* Quick Percentage Chips */}
+            <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+              {[0, 5, 10, 15, 20, 25, 50].map((p) => {
+                const isSelected = !isFlatDiscount && discountPercent === p && !appliedCoupon;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => {
+                      setAppliedCoupon(null);
+                      setIsFlatDiscount(false);
+                      setDiscountPercent(p);
+                      setFlatDiscount('');
+                    }}
+                    className={`px-2 py-1 rounded-md text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#4B3621] text-white shadow-2xs'
+                        : 'bg-white border border-[#E0D7D0] text-[#2D241E] hover:bg-[#FDFCFB]'
+                    }`}
+                  >
+                    {p === 0 ? '0%' : `${p}%`}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Custom Inputs */}
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
+              <div className="relative">
+                <input
+                  type="number"
+                  value={isFlatDiscount || appliedCoupon ? '' : discountPercent || ''}
+                  onChange={(e) => {
+                    setAppliedCoupon(null);
                     setIsFlatDiscount(false);
-                    setDiscountPercent(p);
+                    setDiscountPercent(parseFloat(e.target.value) || 0);
                   }}
-                  className={`px-2 py-1 rounded-md text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#4B3621] text-white shadow-2xs'
-                      : 'bg-white border border-[#E0D7D0] text-[#2D241E] hover:bg-[#FDFCFB]'
-                  }`}
-                >
-                  {p === 0 ? '0%' : `${p}%`}
-                </button>
-              );
-            })}
+                  placeholder="Custom %"
+                  min="0"
+                  max="100"
+                  className="w-full bg-white border border-[#E0D7D0] rounded-lg px-2 py-1 text-xs text-[#2D241E] focus:border-[#4B3621]"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#8B7E74]">%</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  value={appliedCoupon ? '' : flatDiscount}
+                  onChange={(e) => {
+                    setAppliedCoupon(null);
+                    setIsFlatDiscount(true);
+                    setFlatDiscount(e.target.value);
+                  }}
+                  placeholder="Flat ₹ Off"
+                  min="0"
+                  className="w-full bg-white border border-[#E0D7D0] rounded-lg px-2 py-1 text-xs text-[#2D241E] focus:border-[#4B3621]"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#8B7E74]">₹</span>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <div className="relative">
-              <input
-                type="number"
-                value={isFlatDiscount ? '' : discountPercent || ''}
-                onChange={(e) => {
-                  setIsFlatDiscount(false);
-                  setDiscountPercent(parseFloat(e.target.value) || 0);
-                }}
-                placeholder="Custom %"
-                min="0"
-                max="100"
-                className="w-full bg-white border border-[#E0D7D0] rounded-lg px-2 py-1 text-xs text-[#2D241E] focus:border-[#4B3621]"
-              />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#8B7E74]">%</span>
+        {/* COUPON CODE TEXT ENTRY (Toggled Separately in Settings, Configured in Menu & Rates) */}
+        {settings.isCouponEnabled !== false && (
+          <div className="bg-[#F9F7F5] border border-[#E0D7D0] rounded-xl p-2.5 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-[#4B3621] flex items-center gap-1">
+                <Tag className="w-3.5 h-3.5 text-[#4B3621]" />
+                <span>COUPON CODE:</span>
+              </span>
+              {appliedCoupon && (
+                <span className="text-[11px] font-bold text-emerald-700 font-mono">
+                  -₹{taxDetails.discountAmount.toFixed(2)}
+                </span>
+              )}
             </div>
-            <div className="relative">
-              <input
-                type="number"
-                value={flatDiscount}
-                onChange={(e) => {
-                  setIsFlatDiscount(true);
-                  setFlatDiscount(e.target.value);
-                }}
-                placeholder="Flat ₹"
-                min="0"
-                className="w-full bg-white border border-[#E0D7D0] rounded-lg px-2 py-1 text-xs text-[#2D241E] focus:border-[#4B3621]"
-              />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-[#8B7E74]">₹</span>
-            </div>
+
+            {/* Input field to type coupon code */}
+            <form onSubmit={handleApplyCouponCode} className="flex gap-1.5 items-center">
+              <div className="relative flex-1">
+                <Tag className="w-3.5 h-3.5 text-[#8B7E74] absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={couponInputText}
+                  onChange={(e) => {
+                    setCouponInputText(e.target.value.toUpperCase());
+                    if (couponError) setCouponError(null);
+                  }}
+                  placeholder="Enter Coupon Code"
+                  className="w-full bg-white border border-[#E0D7D0] rounded-lg py-1.5 pl-8 pr-2 text-xs font-mono font-bold text-[#4B3621] uppercase tracking-wider focus:outline-hidden focus:border-[#4B3621]"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!couponInputText.trim()}
+                className="px-3.5 py-1.5 bg-[#4B3621] hover:bg-[#3D2C1B] disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0"
+              >
+                Apply
+              </button>
+            </form>
+
+            {/* Inline validation error message */}
+            {couponError && (
+              <div className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-2 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+                <span>{couponError}</span>
+              </div>
+            )}
+
+            {/* Applied Coupon Info Box with Remove Button */}
+            {appliedCoupon && (
+              <div className="p-2 bg-emerald-50 border border-emerald-300 rounded-lg flex items-center justify-between text-xs text-emerald-950">
+                <div className="flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0">
+                    <Check className="w-3 h-3 stroke-[3]" />
+                  </span>
+                  <div>
+                    <div className="font-bold flex items-center gap-1.5">
+                      <span className="font-mono bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded border border-emerald-300 text-[11px]">
+                        {appliedCoupon.code}
+                      </span>
+                      <span className="text-emerald-800">
+                        ({appliedCoupon.type === 'percent' ? `${appliedCoupon.value}% OFF` : `Flat ₹${appliedCoupon.value} OFF`})
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-emerald-700">
+                      Saved: -₹{taxDetails.discountAmount.toFixed(2)}
+                      {appliedCoupon.description ? ` • ${appliedCoupon.description}` : ''}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemoveAppliedCoupon}
+                  className="px-2 py-1 bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold rounded-md transition-colors cursor-pointer flex items-center gap-1"
+                  title="Remove coupon code"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Remove</span>
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
 
         {/* GST TAX (Configured in Settings) */}
         <div className="bg-[#F4F1EE] border border-[#E0D7D0] rounded-xl p-2.5 flex items-center justify-between text-xs">
@@ -882,6 +1047,7 @@ export const CartPanel: React.FC<CartPanelProps> = ({
           </button>
         </div>
       </div>
+
     </div>
   );
 };

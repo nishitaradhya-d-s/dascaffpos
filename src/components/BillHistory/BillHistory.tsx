@@ -3,7 +3,7 @@ import { BillRecord, CafeSettings } from '../../types';
 import { printReceipt } from '../../utils/printer';
 import { exportBillsToCsv } from '../../utils/csvExport';
 import { downloadInvoicePdf } from '../../utils/pdfGenerator';
-import { EditInvoiceModal } from '../GstReports/EditInvoiceModal';
+import { EditInvoiceModal } from './EditInvoiceModal';
 import { ConfirmDeleteModal } from '../Common/ConfirmDeleteModal';
 import { 
   Search, 

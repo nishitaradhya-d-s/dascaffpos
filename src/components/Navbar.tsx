@@ -13,6 +13,7 @@ import {
   Boxes 
 } from 'lucide-react';
 import { CafeSettings } from '../types';
+import { BluetoothQuickConnect } from './Navbar/BluetoothQuickConnect';
 
 export type ActiveTab = 'pos' | 'history' | 'gst' | 'menu' | 'kot' | 'inventory';
 
@@ -134,6 +135,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="hidden sm:inline">New Bill</span>
             <span className="sm:hidden">New</span>
           </button>
+
+          {/* Bluetooth Printer Quick Connect (Outside Settings) */}
+          <BluetoothQuickConnect />
 
           {/* Settings */}
           <button

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { MenuItem, Category, ItemType } from '../../types';
-import { getStoredCategories, saveCategories } from '../../utils/storage';
+import { getStoredCategories, saveCategories, getStoredCoupons } from '../../utils/storage';
+import { CouponManagerSection } from './CouponManagerSection';
 import { 
   Plus, 
   Search, 
@@ -14,7 +15,8 @@ import {
   Sparkles,
   Save,
   FolderPlus,
-  LayoutGrid
+  LayoutGrid,
+  Tag
 } from 'lucide-react';
 
 interface MenuManagerProps {
@@ -28,6 +30,7 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
   onSaveMenu,
   onResetMenu,
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState<'menu' | 'coupons'>('menu');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('All');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
@@ -175,8 +178,69 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
     }
   };
 
+  const couponsList = useMemo(() => getStoredCoupons(), [activeSubTab]);
+  const activeCouponsCount = useMemo(() => couponsList.filter((c) => c.isActive).length, [couponsList]);
+
+  if (activeSubTab === 'coupons') {
+    return (
+      <div className="h-full flex-1 flex flex-col bg-[#F4F1EE] overflow-hidden select-none">
+        {/* Sub-Tab Navigation Bar */}
+        <div className="bg-[#4B3621] px-4 pt-3 flex items-center justify-between border-b border-[#3D2C1B]">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('menu')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer text-amber-100/70 hover:text-white hover:bg-white/5"
+            >
+              <UtensilsCrossed className="w-4 h-4" />
+              <span>Menu Items &amp; Rates Catalog</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('coupons')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer bg-[#F4F1EE] text-[#4B3621] shadow-xs"
+            >
+              <Tag className="w-4 h-4 text-[#4B3621]" />
+              <span>Coupon Codes &amp; Vouchers</span>
+              <span className="bg-[#4B3621] text-amber-200 text-[10px] font-mono px-1.5 py-0.2 rounded-full">
+                {activeCouponsCount}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <CouponManagerSection />
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex-1 flex flex-col bg-[#F4F1EE] overflow-hidden select-none">
+      {/* Sub-Tab Navigation Bar */}
+      <div className="bg-[#4B3621] px-4 pt-3 flex items-center justify-between border-b border-[#3D2C1B]">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('menu')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer bg-[#F4F1EE] text-[#4B3621] shadow-xs"
+          >
+            <UtensilsCrossed className="w-4 h-4 text-[#4B3621]" />
+            <span>Menu Items &amp; Rates Catalog</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab('coupons')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer text-amber-100/70 hover:text-white hover:bg-white/5"
+          >
+            <Tag className="w-4 h-4" />
+            <span>Coupon Codes &amp; Vouchers</span>
+            <span className="bg-amber-200/20 text-amber-200 text-[10px] font-mono px-1.5 py-0.2 rounded-full">
+              {activeCouponsCount}
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* Top Header */}
       <div className="p-4 bg-white border-b border-[#E0D7D0] space-y-3 shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

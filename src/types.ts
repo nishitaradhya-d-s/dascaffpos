@@ -104,6 +104,7 @@ export interface BillRecord {
   changeReturned?: number; // Return change given (e.g. 20)
   status: OrderStatus;
   notes?: string;
+  couponCode?: string;
   createdBy: string;
   cashierName?: string;
 }
@@ -237,6 +238,16 @@ export interface HeldBill {
   notes?: string;
 }
 
+export interface CouponCode {
+  id: string;
+  code: string; // e.g. "WELCOME10", "FLAT50"
+  type: 'percent' | 'flat';
+  value: number; // percentage (e.g. 10) or flat amount in ₹ (e.g. 50)
+  minBillAmount?: number;
+  description?: string;
+  isActive: boolean;
+}
+
 export interface CafeSettings {
   cafeName: string; // e.g. "DAS CAFF"
   tagline: string; // e.g. "TAX INVOICE / ORIGINAL"
@@ -253,6 +264,8 @@ export interface CafeSettings {
   cgstRate: number; // 2.5%
   sgstRate: number; // 2.5%
   isGstEnabled: boolean;
+  isDiscountEnabled?: boolean; // Toggle manual discount % and flat ₹ in POS billing
+  isCouponEnabled?: boolean; // Toggle coupon code text input & auto-apply in POS billing
   invoicePrefix: string; // "INV-"
   kotPrefix: string; // "KOT-"
   termsAndConditions: string;

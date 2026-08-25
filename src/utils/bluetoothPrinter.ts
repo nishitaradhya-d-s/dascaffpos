@@ -237,7 +237,9 @@ function buildEscPosTaxInvoice(bill: BillRecord, settings: CafeSettings): Uint8A
   // Left align for metadata
   command(0x1B, 0x61, 0);
   const checkNo = bill.checkNumber || bill.billNumber.replace(/[^0-9]/g, '') || '001';
-  const tableDisplay = bill.tableNumber ? bill.tableNumber.replace(/[^0-9]/g, '') || bill.tableNumber : '1';
+  const tableDisplay = bill.orderType === 'Dine-In' && bill.tableNumber 
+    ? (bill.tableNumber.replace(/[^0-9]/g, '') || bill.tableNumber) 
+    : 'N/A';
 
   write(`CHECK NO : ${checkNo.padEnd(16)} Table No: ${tableDisplay}\n`);
   write(`Customer Name: ${(bill.customerName || 'Walk-in')}\n`);

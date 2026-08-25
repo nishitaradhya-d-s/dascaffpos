@@ -98,7 +98,7 @@ export const BillSuccessModal: React.FC<BillSuccessModalProps> = ({
 
           <div className="mt-4 pt-3 border-t border-white/15 flex justify-around text-center">
             <div>
-              <div className="text-[10px] uppercase text-amber-200/70 font-bold">Total Paid</div>
+              <div className="text-[10px] uppercase text-amber-200/70 font-bold">Total Payable</div>
               <div className="text-lg font-bold text-amber-200 font-mono">
                 ₹{bill.taxDetails.grandTotal.toFixed(2)}
               </div>
@@ -107,12 +107,21 @@ export const BillSuccessModal: React.FC<BillSuccessModalProps> = ({
               <div className="text-[10px] uppercase text-amber-200/70 font-bold">Mode</div>
               <div className="text-xs font-bold text-white mt-1">{bill.paymentMode}</div>
             </div>
-            <div>
-              <div className="text-[10px] uppercase text-amber-200/70 font-bold">Type</div>
-              <div className="text-xs font-bold text-emerald-300 mt-1">
-                {isGst ? 'GST Invoice' : 'Non-GST'}
+            {bill.changeReturned && bill.changeReturned > 0 ? (
+              <div>
+                <div className="text-[10px] uppercase text-emerald-300 font-bold">Return Change</div>
+                <div className="text-sm font-bold text-emerald-300 font-mono mt-0.5">
+                  ₹{bill.changeReturned.toFixed(2)}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <div className="text-[10px] uppercase text-amber-200/70 font-bold">Type</div>
+                <div className="text-xs font-bold text-emerald-300 mt-1">
+                  {isGst ? 'GST Invoice' : 'Non-GST'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

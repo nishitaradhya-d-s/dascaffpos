@@ -305,9 +305,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="relative">
                 <input
                   type={showManagerPass ? 'text' : 'password'}
-                  value={formData.managerPassword || 'rakesh@das'}
+                  value={formData.managerPassword || ''}
                   onChange={(e) => handleChange('managerPassword', e.target.value)}
-                  required
+                  placeholder="Set Manager Password (optional)"
                   className="w-full bg-white border border-[#E0D7D0] rounded-lg p-2 pr-9 font-mono font-bold text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
                 />
                 <button
@@ -318,7 +318,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {showManagerPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <span className="text-[10px] text-[#8B7E74]">Default manager password is <strong>rakesh@das</strong></span>
+              <span className="text-[10px] text-[#8B7E74]">Set a custom security password to restrict access to manager sections</span>
             </div>
           </div>
 
@@ -368,11 +368,73 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Section 4: Tax & Rates */}
+          {/* Section 4: Tax, Discount & Coupon Configuration */}
           <div className="bg-[#F9F7F5] p-4 rounded-xl border border-[#E0D7D0] space-y-3">
             <div className="flex items-center gap-1.5 font-bold text-[#2D241E] text-xs uppercase tracking-wider">
               <Percent className="w-4 h-4 text-[#4B3621]" />
-              <span>Tax Configuration (GST Rate %)</span>
+              <span>Tax, Discount &amp; Coupon Configuration</span>
+            </div>
+
+            {/* 1. Discount Option ON/OFF Toggle */}
+            <div className="bg-white p-3 rounded-lg border border-[#E0D7D0] flex items-center justify-between">
+              <div>
+                <div className="text-xs font-bold text-[#2D241E] flex items-center gap-1.5">
+                  <span>1. Show Manual Discount (% / Flat ₹) in POS</span>
+                  {formData.isDiscountEnabled !== false ? (
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                      ENABLED (ON)
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-gray-100 text-gray-700 font-bold px-1.5 py-0.5 rounded">
+                      DISABLED (OFF)
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10.5px] text-[#8B7E74] mt-0.5">
+                  When turned OFF, manual discount chips (0%, 5%, 10%...) and custom % / ₹ input boxes are hidden in POS billing.
+                </p>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                <input
+                  type="checkbox"
+                  checked={formData.isDiscountEnabled !== false}
+                  onChange={(e) => handleChange('isDiscountEnabled', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4B3621]"></div>
+              </label>
+            </div>
+
+            {/* 2. Coupon Code Option ON/OFF Toggle */}
+            <div className="bg-white p-3 rounded-lg border border-[#E0D7D0] flex items-center justify-between">
+              <div>
+                <div className="text-xs font-bold text-[#2D241E] flex items-center gap-1.5">
+                  <span>2. Show Coupon Code Entry in POS</span>
+                  {formData.isCouponEnabled !== false ? (
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                      ENABLED (ON)
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-gray-100 text-gray-700 font-bold px-1.5 py-0.5 rounded">
+                      DISABLED (OFF)
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10.5px] text-[#8B7E74] mt-0.5">
+                  When turned OFF, the coupon code text field and voucher auto-apply are hidden in POS billing.
+                </p>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                <input
+                  type="checkbox"
+                  checked={formData.isCouponEnabled !== false}
+                  onChange={(e) => handleChange('isCouponEnabled', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4B3621]"></div>
+              </label>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

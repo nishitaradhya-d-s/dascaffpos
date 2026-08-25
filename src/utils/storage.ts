@@ -13,7 +13,8 @@ import {
   PurchaseOrder,
   RecipeMapping,
   RecipeIngredient,
-  GlobalAddon
+  GlobalAddon,
+  CouponCode
 } from '../types';
 import { DEFAULT_MENU_ITEMS } from '../data/defaultMenu';
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
@@ -47,6 +48,7 @@ const KEYS = {
   INVOICE_SEQ: 'dascaff_invoice_seq_v3',
   KOT_SEQ: 'dascaff_kot_seq_v3',
   SEQ_RESET_ACTIVE: 'dascaff_seq_reset_active_v3',
+  COUPONS: 'dascaff_coupons_v3',
 };
 
 // Safe JSON parser
@@ -69,9 +71,149 @@ function safeSet<T>(key: string, value: T): void {
   }
 }
 
-// 1. Settings
+// 13. Coupon Codes Management
+const DEFAULT_COUPONS: CouponCode[] = [
+  {
+    id: 'cpn-1',
+    code: 'WELCOME10',
+    type: 'percent',
+    value: 10,
+    minBillAmount: 100,
+    description: '10% Off on orders above ₹100',
+    isActive: true,
+  },
+  {
+    id: 'cpn-2',
+    code: 'DASCAFF50',
+    type: 'flat',
+    value: 50,
+    minBillAmount: 300,
+    description: 'Flat ₹50 Off on orders above ₹300',
+    isActive: true,
+  },
+  {
+    id: 'cpn-3',
+    code: 'FESTIVE15',
+    type: 'percent',
+    value: 15,
+    minBillAmount: 200,
+    description: '15% Off on orders above ₹200',
+    isActive: true,
+  },
+];
+
+export function getStoredCoupons(): CouponCode[] {
+  const parsed = safeParse<CouponCode[]>(KEYS.COUPONS, DEFAULT_COUPONS);
+  const list = Array.isArray(parsed) ? parsed : DEFAULT_COUPONS;
+
+  const seenIds = new Set<string>();
+  const seenCodes = new Set<string>();
+  const sanitized: CouponCode[] = [];
+
+  for (const c of list) {
+    if (!c || typeof c !== 'object') continue;
+    let id = String(c.id || '').trim();
+    const code = String(c.code || '').trim().toUpperCase();
+    if (!code) continue;
+
+    // Prevent duplicate codes or duplicate IDs
+    if (seenCodes.has(code)) continue;
+
+    if (!id || seenIds.has(id)) {
+      id = `cpn-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    }
+
+    seenIds.add(id);
+    seenCodes.add(code);
+    sanitized.push({
+      ...c,
+      id,
+      code,
+      type: c.type === 'flat' ? 'flat' : 'percent',
+      value: Number(c.value) || 0,
+      minBillAmount: c.minBillAmount ? Number(c.minBillAmount) : undefined,
+      description: c.description ? String(c.description) : undefined,
+      isActive: c.isActive !== false,
+    });
+  }
+
+  // If sanitization cleaned up or altered the array, persist it back
+  if (sanitized.length !== list.length) {
+    safeSet(KEYS.COUPONS, sanitized);
+  }
+
+  return sanitized;
+}
+
+export function saveCoupons(coupons: CouponCode[]): void {
+  // Deduplicate before saving
+  const seenIds = new Set<string>();
+  const seenCodes = new Set<string>();
+  const unique: CouponCode[] = [];
+
+  for (const c of coupons) {
+    if (!c || !c.code) continue;
+    const code = c.code.trim().toUpperCase();
+    if (seenCodes.has(code)) continue;
+
+    let id = c.id ? String(c.id).trim() : '';
+    if (!id || seenIds.has(id)) {
+      id = `cpn-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    }
+
+    seenIds.add(id);
+    seenCodes.add(code);
+    unique.push({
+      ...c,
+      id,
+      code,
+    });
+  }
+
+  safeSet(KEYS.COUPONS, unique);
+}
+
+export function addCouponCode(coupon: Omit<CouponCode, 'id'>): CouponCode {
+  const coupons = getStoredCoupons();
+  const codeClean = coupon.code.trim().toUpperCase();
+  
+  // Remove if matching code already exists
+  const filtered = coupons.filter((c) => c.code.toUpperCase() !== codeClean);
+
+  const newCoupon: CouponCode = {
+    ...coupon,
+    id: `cpn-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    code: codeClean,
+  };
+  
+  filtered.unshift(newCoupon);
+  saveCoupons(filtered);
+  return newCoupon;
+}
+
+export function deleteCouponCode(couponId: string): void {
+  const coupons = getStoredCoupons();
+  const updated = coupons.filter((c) => c.id !== couponId);
+  saveCoupons(updated);
+}
+
+export function toggleCouponActive(couponId: string): void {
+  const coupons = getStoredCoupons();
+  const target = coupons.find((c) => c.id === couponId);
+  if (target) {
+    target.isActive = !target.isActive;
+    saveCoupons(coupons);
+  }
+}
+
 export function getStoredSettings(): CafeSettings {
-  return safeParse<CafeSettings>(KEYS.SETTINGS, DEFAULT_SETTINGS);
+  const settings = safeParse<CafeSettings>(KEYS.SETTINGS, DEFAULT_SETTINGS);
+  // Clean up legacy rakesh@das if present
+  if (settings.managerPassword === 'rakesh@das') {
+    settings.managerPassword = '';
+    safeSet(KEYS.SETTINGS, settings);
+  }
+  return settings;
 }
 
 export function saveSettings(settings: CafeSettings): void {
@@ -519,8 +661,11 @@ export function setManagerUnlocked(unlocked: boolean): void {
 
 export function verifyManagerPassword(password: string, settings?: CafeSettings): boolean {
   const customTarget = settings?.managerPassword?.trim();
-  if (customTarget && password === customTarget) return true;
-  return password === 'rakesh@das' || password === 'rakdas@098' || password === 'admin';
+  if (customTarget) {
+    return password === customTarget;
+  }
+  const loginPass = settings?.loginPassword?.trim() || 'rakdas@098';
+  return password === loginPass || password === 'admin' || password === '1234';
 }
 
 export function verifyLoginCredentials(username: string, pinOrPass: string, settings?: CafeSettings): boolean {
@@ -540,7 +685,7 @@ export function verifyLoginCredentials(username: string, pinOrPass: string, sett
   // Also support default admin credentials
   if (
     (username.trim().toUpperCase() === 'DASCAFF' || username.trim().toLowerCase() === 'admin') &&
-    (pinOrPass === 'rakdas@098' || pinOrPass === 'rakesh@das' || pinOrPass === '1234')
+    (pinOrPass === 'rakdas@098' || pinOrPass === 'admin' || pinOrPass === '1234')
   ) {
     return true;
   }

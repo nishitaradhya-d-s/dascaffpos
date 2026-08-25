@@ -4,9 +4,7 @@ import { exportBillsToCsv } from '../../utils/csvExport';
 import { exportGstReportPdf, downloadInvoicePdf } from '../../utils/pdfGenerator';
 import { printReceipt } from '../../utils/printer';
 import { BillDetailModal } from '../BillHistory/BillDetailModal';
-import { EditInvoiceModal } from './EditInvoiceModal';
 import { DayClosingReportModal } from './DayClosingReportModal';
-import { ConfirmDeleteModal } from '../Common/ConfirmDeleteModal';
 import { 
   FileSpreadsheet, 
   Download, 
@@ -16,18 +14,16 @@ import {
   PieChart, 
   Receipt, 
   CheckCircle2, 
-  Trash2,
-  Eye,
-  Printer,
-  Search,
-  Edit3,
-  Moon,
-  Clock,
-  Send,
-  Sparkles,
-  Share2,
-  DollarSign,
-  SunMedium
+  Eye, 
+  Printer, 
+  Search, 
+  Moon, 
+  Clock, 
+  Send, 
+  Sparkles, 
+  Share2, 
+  DollarSign, 
+  SunMedium 
 } from 'lucide-react';
 
 interface GstReportsProps {
@@ -67,8 +63,6 @@ export const GstReports: React.FC<GstReportsProps> = ({
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBillForDetail, setSelectedBillForDetail] = useState<BillRecord | null>(null);
-  const [billToEdit, setBillToEdit] = useState<BillRecord | null>(null);
-  const [billToDelete, setBillToDelete] = useState<BillRecord | null>(null);
   const [isDayClosingModalOpen, setIsDayClosingModalOpen] = useState(false);
 
   // Today's specific bills for live revenue & day-closing
@@ -275,12 +269,6 @@ export const GstReports: React.FC<GstReportsProps> = ({
     text += `✨ *Generated from POS System*`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
-  const handleSaveEditedInvoice = (updated: BillRecord) => {
-    if (onUpdateBill) {
-      onUpdateBill(updated);
-    }
   };
 
   const getReportTitle = () => {
@@ -787,16 +775,6 @@ export const GstReports: React.FC<GstReportsProps> = ({
                             <Eye className="w-3.5 h-3.5" />
                           </button>
 
-                          {/* Edit Button */}
-                          <button
-                            type="button"
-                            onClick={() => setBillToEdit(b)}
-                            className="p-1.5 rounded-md bg-[#F4F1EE] hover:bg-[#4B3621] text-[#4B3621] hover:text-white transition-colors cursor-pointer"
-                            title="Edit Invoice Details"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-
                           {/* Print Button */}
                           <button
                             type="button"
@@ -815,16 +793,6 @@ export const GstReports: React.FC<GstReportsProps> = ({
                             title="Download PDF Invoice"
                           >
                             <Download className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Delete Button */}
-                          <button
-                            type="button"
-                            onClick={() => setBillToDelete(b)}
-                            className="p-1.5 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
-                            title="Delete Bill Record"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
@@ -862,17 +830,6 @@ export const GstReports: React.FC<GstReportsProps> = ({
         />
       )}
 
-      {/* Edit Invoice Modal */}
-      {billToEdit && (
-        <EditInvoiceModal
-          bill={billToEdit}
-          settings={settings}
-          isOpen={Boolean(billToEdit)}
-          onClose={() => setBillToEdit(null)}
-          onSave={handleSaveEditedInvoice}
-        />
-      )}
-
       {/* Day Closing Summary to WhatsApp Modal */}
       <DayClosingReportModal
         isOpen={isDayClosingModalOpen}
@@ -880,23 +837,6 @@ export const GstReports: React.FC<GstReportsProps> = ({
         todayBills={todayBills}
         settings={settings}
       />
-
-      {/* Confirm Delete Invoice Modal */}
-      {billToDelete && (
-        <ConfirmDeleteModal
-          isOpen={Boolean(billToDelete)}
-          title="Delete Tax Invoice"
-          message="Are you sure you want to permanently delete this GST Tax Invoice from the audit register?"
-          itemIdentifier={`Invoice #${billToDelete.billNumber} • ${billToDelete.customerName || 'Walk-in'} (₹${billToDelete.taxDetails.grandTotal.toFixed(2)})`}
-          onConfirm={() => {
-            if (onDeleteBill) {
-              onDeleteBill(billToDelete.id);
-            }
-            setBillToDelete(null);
-          }}
-          onCancel={() => setBillToDelete(null)}
-        />
-      )}
     </div>
   );
 };

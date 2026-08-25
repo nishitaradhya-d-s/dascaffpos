@@ -43,7 +43,9 @@ export function formatBillDate(dateString: string): { dateStr: string; timeStr: 
 export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings): string {
   const { fullFormatted } = formatBillDate(bill.date);
   const checkNo = bill.checkNumber || bill.billNumber.replace(/[^0-9]/g, '') || '001';
-  const tableDisplay = bill.tableNumber ? bill.tableNumber.replace(/[^0-9]/g, '') || bill.tableNumber : '1';
+  const tableDisplay = bill.orderType === 'Dine-In' && bill.tableNumber 
+    ? (bill.tableNumber.replace(/[^0-9]/g, '') || bill.tableNumber) 
+    : 'N/A';
   const isGst = bill.billType === 'GST_Customer';
 
   const itemsHtml = bill.items

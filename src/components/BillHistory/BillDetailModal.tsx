@@ -156,6 +156,20 @@ export const BillDetailModal: React.FC<BillDetailModalProps> = ({
                 ₹{bill.taxDetails.grandTotal.toFixed(2)}
               </span>
             </div>
+
+            {bill.amountPaid && bill.amountPaid > 0 && (
+              <div className="flex justify-between text-xs text-[#4B3621] pt-1 font-semibold">
+                <span>Cash Received:</span>
+                <span className="font-mono font-bold">₹{bill.amountPaid.toFixed(2)}</span>
+              </div>
+            )}
+
+            {bill.changeReturned && bill.changeReturned > 0 && (
+              <div className="flex justify-between text-xs text-emerald-800 pt-0.5 font-bold">
+                <span>Return Change:</span>
+                <span className="font-mono">₹{bill.changeReturned.toFixed(2)}</span>
+              </div>
+            )}
           </div>
         </div>
 
