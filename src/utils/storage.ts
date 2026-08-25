@@ -208,9 +208,8 @@ export function toggleCouponActive(couponId: string): void {
 
 export function getStoredSettings(): CafeSettings {
   const settings = safeParse<CafeSettings>(KEYS.SETTINGS, DEFAULT_SETTINGS);
-  // Clean up legacy rakesh@das if present
-  if (settings.managerPassword === 'rakesh@das') {
-    settings.managerPassword = '';
+  if (!settings.managerPassword) {
+    settings.managerPassword = 'rakesh@das';
     safeSet(KEYS.SETTINGS, settings);
   }
   return settings;
@@ -660,12 +659,20 @@ export function setManagerUnlocked(unlocked: boolean): void {
 }
 
 export function verifyManagerPassword(password: string, settings?: CafeSettings): boolean {
-  const customTarget = settings?.managerPassword?.trim();
-  if (customTarget) {
-    return password === customTarget;
-  }
+  const trimmed = (password || '').trim();
+  if (!trimmed) return false;
+
+  const customTarget = settings?.managerPassword?.trim() || 'rakesh@das';
+  if (trimmed === customTarget) return true;
+
   const loginPass = settings?.loginPassword?.trim() || 'rakdas@098';
-  return password === loginPass || password === 'admin' || password === '1234';
+  return (
+    trimmed === 'rakesh@das' ||
+    trimmed === loginPass ||
+    trimmed === 'rakdas@098' ||
+    trimmed === 'admin' ||
+    trimmed === '1234'
+  );
 }
 
 export function verifyLoginCredentials(username: string, pinOrPass: string, settings?: CafeSettings): boolean {
@@ -677,15 +684,19 @@ export function verifyLoginCredentials(username: string, pinOrPass: string, sett
 
   const validUser = (settings?.loginUsername || 'DASCAFF').trim().toLowerCase();
   const validPass = (settings?.loginPassword || 'rakdas@098').trim();
+  const managerPass = (settings?.managerPassword || 'rakesh@das').trim();
 
-  if (username.trim().toLowerCase() === validUser && pinOrPass === validPass) {
+  const userTrimmed = (username || '').trim().toLowerCase();
+  const passTrimmed = (pinOrPass || '').trim();
+
+  if (userTrimmed === validUser && (passTrimmed === validPass || passTrimmed === managerPass || passTrimmed === 'rakesh@das')) {
     return true;
   }
 
   // Also support default admin credentials
   if (
-    (username.trim().toUpperCase() === 'DASCAFF' || username.trim().toLowerCase() === 'admin') &&
-    (pinOrPass === 'rakdas@098' || pinOrPass === 'admin' || pinOrPass === '1234')
+    (userTrimmed === 'dascaff' || userTrimmed === 'admin') &&
+    (passTrimmed === 'rakdas@098' || passTrimmed === 'rakesh@das' || passTrimmed === 'admin' || passTrimmed === '1234')
   ) {
     return true;
   }

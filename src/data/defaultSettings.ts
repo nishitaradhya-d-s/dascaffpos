@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS: CafeSettings = {
   thermalPaperWidth: '80mm',
   autoCut: true,
   autoCutPaper: true,
-  managerPassword: '',
+  managerPassword: 'rakesh@das',
   loginUsername: 'DASCAFF',
   loginPassword: 'rakdas@098',
   invoiceStartSeq: 1,

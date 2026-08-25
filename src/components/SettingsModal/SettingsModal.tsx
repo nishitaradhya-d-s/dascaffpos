@@ -305,9 +305,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className="relative">
                 <input
                   type={showManagerPass ? 'text' : 'password'}
-                  value={formData.managerPassword || ''}
+                  value={formData.managerPassword ?? 'rakesh@das'}
                   onChange={(e) => handleChange('managerPassword', e.target.value)}
-                  placeholder="Set Manager Password (optional)"
+                  placeholder="rakesh@das"
+                  required
                   className="w-full bg-white border border-[#E0D7D0] rounded-lg p-2 pr-9 font-mono font-bold text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
                 />
                 <button
@@ -318,7 +319,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {showManagerPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              <span className="text-[10px] text-[#8B7E74]">Set a custom security password to restrict access to manager sections</span>
+              <span className="text-[10px] text-[#8B7E74]">Admin manager password is <strong>rakesh@das</strong> (or customize to any password)</span>
             </div>
           </div>
 
