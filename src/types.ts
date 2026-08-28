@@ -36,6 +36,36 @@ export interface GlobalAddon {
   isAvailable: boolean;
 }
 
+export interface ComboSlotOption {
+  id: string;
+  name: string; // e.g., "Chilled Pepsi 300ml", "Coke Can 250ml", "Mineral Water", "Extra Garlic Dip"
+  type?: ItemType;
+  priceDelta?: number; // optional extra cost
+  isCustomUnlisted?: boolean;
+}
+
+export interface ComboSlot {
+  id: string;
+  title: string; // e.g. "Select 1 Burger", "Select 1 Cold Drink (Coke / Pepsi / Sprite)", "Select 1 Side"
+  type: 'category' | 'custom_items' | 'mixed';
+  category?: string; // e.g. "Burger", "Pizza", "Beverages", "Pasta & Rolls"
+  customOptions?: ComboSlotOption[]; // Custom unlisted items (Coke, Pepsi, Sprite, Frooti, Water Bottle, etc.)
+  requiredCount?: number;
+  defaultOption?: string;
+}
+
+export interface ComboItem {
+  id: string;
+  name: string; // e.g. "Burger & Cold Drink Combo", "Pizza Feast Deal"
+  price: number;
+  description?: string;
+  type: ItemType;
+  isAvailable: boolean;
+  isPopular?: boolean;
+  slots: ComboSlot[];
+  imageUrl?: string;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -60,8 +90,14 @@ export interface CartItem {
   quantity: number;
   selectedVariant?: Variant;
   addons?: Addon[];
+  comboSelections?: {
+    slotTitle: string;
+    selectedName: string;
+    priceDelta?: number;
+  }[];
   notes?: string;
   totalPrice: number;
+  isCombo?: boolean;
 }
 
 export interface TaxDetails {

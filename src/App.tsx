@@ -5,7 +5,8 @@ import {
   CartItem, 
   BillRecord, 
   CafeSettings, 
-  OrderStatus 
+  OrderStatus,
+  ComboItem
 } from './types';
 import { 
   getStoredMenu, 
@@ -36,6 +37,7 @@ import { Navbar, ActiveTab } from './components/Navbar';
 import { MenuGrid } from './components/PosBilling/MenuGrid';
 import { CartPanel } from './components/PosBilling/CartPanel';
 import { ItemCustomizerModal } from './components/PosBilling/ItemCustomizerModal';
+import { ComboSelectorModal } from './components/PosBilling/ComboSelectorModal';
 import { BillSuccessModal } from './components/PosBilling/BillSuccessModal';
 import { BillHistory } from './components/BillHistory/BillHistory';
 import { BillDetailModal } from './components/BillHistory/BillDetailModal';
@@ -101,6 +103,7 @@ export default function App() {
   // POS Cart State
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [customizerItem, setCustomizerItem] = useState<MenuItem | null>(null);
+  const [selectedComboForCustomizing, setSelectedComboForCustomizing] = useState<ComboItem | null>(null);
 
   // Modals
   const [justSettledBill, setJustSettledBill] = useState<BillRecord | null>(null);
@@ -419,6 +422,7 @@ export default function App() {
               <MenuGrid
                 menuItems={menuItems}
                 onOpenCustomizer={(item) => setCustomizerItem(item)}
+                onSelectCombo={(combo) => setSelectedComboForCustomizing(combo)}
                 onQuickAdd={handleQuickAdd}
                 onUpdateCartQuantityByMenuItemId={handleUpdateCartQuantityByMenuItemId}
                 cartItems={cartItems}
@@ -518,6 +522,15 @@ export default function App() {
         isOpen={Boolean(customizerItem)}
         onClose={() => setCustomizerItem(null)}
         onAddToCart={handleAddToCart}
+      />
+
+      {/* 1b. Combo Deal Selector Modal */}
+      <ComboSelectorModal
+        combo={selectedComboForCustomizing}
+        isOpen={Boolean(selectedComboForCustomizing)}
+        onClose={() => setSelectedComboForCustomizing(null)}
+        onAddToCart={handleAddToCart}
+        menuItems={menuItems}
       />
 
       {/* 2. Bill Settled Success & WhatsApp Dispatch Modal */}

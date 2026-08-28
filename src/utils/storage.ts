@@ -14,7 +14,8 @@ import {
   RecipeMapping,
   RecipeIngredient,
   GlobalAddon,
-  CouponCode
+  CouponCode,
+  ComboItem
 } from '../types';
 import { DEFAULT_MENU_ITEMS } from '../data/defaultMenu';
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
@@ -49,6 +50,7 @@ const KEYS = {
   KOT_SEQ: 'dascaff_kot_seq_v3',
   SEQ_RESET_ACTIVE: 'dascaff_seq_reset_active_v3',
   COUPONS: 'dascaff_coupons_v3',
+  COMBOS: 'dascaff_combos_v3',
 };
 
 // Safe JSON parser
@@ -69,6 +71,158 @@ function safeSet<T>(key: string, value: T): void {
   } catch (e) {
     console.error(`Error writing ${key} to storage:`, e);
   }
+}
+
+// 14. Default Combos with Category Selection & Unlisted Custom Items (Coke, Pepsi, etc.)
+export const DEFAULT_COMBOS: ComboItem[] = [
+  {
+    id: 'combo-1',
+    name: 'Burger & Drink Meal Deal',
+    price: 149,
+    description: '1 Burger from Menu + 1 Cold Drink (Pepsi / Coke / Sprite) + Salted Fries',
+    type: 'veg',
+    isAvailable: true,
+    isPopular: true,
+    slots: [
+      {
+        id: 'slot-1',
+        title: 'Choose your Burger',
+        type: 'category',
+        category: 'Burger',
+        requiredCount: 1,
+      },
+      {
+        id: 'slot-2',
+        title: 'Choose your Beverage / Cold Drink',
+        type: 'custom_items',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'opt-pepsi', name: 'Pepsi Can (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-coke', name: 'Coca Cola Can (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-sprite', name: 'Sprite (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-thumsup', name: 'Thums Up (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-water', name: 'Chilled Mineral Water (500ml)', type: 'beverage', isCustomUnlisted: true },
+        ],
+      },
+      {
+        id: 'slot-3',
+        title: 'Choose your Side / Fries',
+        type: 'mixed',
+        category: 'Fries & Sides',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'opt-fries-std', name: 'Classic Salted Fries', type: 'veg', isCustomUnlisted: true },
+          { id: 'opt-peri-fries', name: 'Peri-Peri Crinkle Fries', type: 'veg', priceDelta: 10, isCustomUnlisted: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'combo-2',
+    name: 'Personal Pizza & Cold Drink Deal',
+    price: 189,
+    description: '1 Pizza from Creamy Pizzas + 1 Cold Beverage + 1 Free Dip',
+    type: 'veg',
+    isAvailable: true,
+    isPopular: true,
+    slots: [
+      {
+        id: 'slot-1',
+        title: 'Choose your Pizza',
+        type: 'category',
+        category: 'Creamy Pizzas',
+        requiredCount: 1,
+      },
+      {
+        id: 'slot-2',
+        title: 'Choose your Cold Drink',
+        type: 'custom_items',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'opt-coke', name: 'Coca Cola (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-pepsi', name: 'Pepsi (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-mirinda', name: 'Mirinda Orange (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-7up', name: '7UP (300ml)', type: 'beverage', isCustomUnlisted: true },
+        ],
+      },
+      {
+        id: 'slot-3',
+        title: 'Select Free Dip',
+        type: 'custom_items',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'dip-cheese', name: 'Cheesy Garlic Dip', type: 'veg', isCustomUnlisted: true },
+          { id: 'dip-mayo', name: 'Creamy Herb Mayo', type: 'veg', isCustomUnlisted: true },
+          { id: 'dip-peri', name: 'Spicy Peri Peri Dip', type: 'veg', isCustomUnlisted: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'combo-3',
+    name: 'Pasta & Cold Drink Combo',
+    price: 199,
+    description: '1 Pasta from Pasta & Rolls + 1 Beverage (Coke / Pepsi / Sprite) + Garlic Bread',
+    type: 'veg',
+    isAvailable: true,
+    isPopular: false,
+    slots: [
+      {
+        id: 'slot-1',
+        title: 'Choose your Pasta / Roll',
+        type: 'category',
+        category: 'Pasta & Rolls',
+        requiredCount: 1,
+      },
+      {
+        id: 'slot-2',
+        title: 'Choose your Cold Drink',
+        type: 'custom_items',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'opt-coke', name: 'Coca Cola (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-pepsi', name: 'Pepsi (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-sprite', name: 'Sprite (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-water', name: 'Packaged Water (500ml)', type: 'beverage', isCustomUnlisted: true },
+        ],
+      },
+    ],
+  },
+];
+
+export function getStoredCombos(): ComboItem[] {
+  const parsed = safeParse<ComboItem[]>(KEYS.COMBOS, DEFAULT_COMBOS);
+  return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_COMBOS;
+}
+
+export function saveCombos(combos: ComboItem[]): void {
+  safeSet(KEYS.COMBOS, combos);
+}
+
+export function addComboItem(combo: ComboItem): void {
+  const list = getStoredCombos();
+  const filtered = list.filter((c) => c.id !== combo.id);
+  filtered.unshift(combo);
+  saveCombos(filtered);
+}
+
+export function deleteComboItem(comboId: string): void {
+  const list = getStoredCombos();
+  saveCombos(list.filter((c) => c.id !== comboId));
+}
+
+export function toggleComboActive(comboId: string): void {
+  const list = getStoredCombos();
+  const target = list.find((c) => c.id === comboId);
+  if (target) {
+    target.isAvailable = !target.isAvailable;
+    saveCombos(list);
+  }
+}
+
+export function resetCombosToDefault(): ComboItem[] {
+  saveCombos(DEFAULT_COMBOS);
+  return DEFAULT_COMBOS;
 }
 
 // 13. Coupon Codes Management
@@ -242,13 +396,46 @@ export function saveCategories(categories: string[]): void {
   safeSet(KEYS.CATEGORIES, categories);
 }
 
-// Global Add-ons & Extra Flavours
+// Global Add-ons & Extra Flavours (Extra Cheese, Extra Topping, etc.)
 export function getStoredAddons(): GlobalAddon[] {
-  return safeParse<GlobalAddon[]>(KEYS.ADDONS, DEFAULT_GLOBAL_ADDONS);
+  const parsed = safeParse<GlobalAddon[]>(KEYS.ADDONS, DEFAULT_GLOBAL_ADDONS);
+  return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_GLOBAL_ADDONS;
 }
 
 export function saveAddons(addons: GlobalAddon[]): void {
   safeSet(KEYS.ADDONS, addons);
+}
+
+export function addAddonItem(addon: GlobalAddon): void {
+  const addons = getStoredAddons();
+  const filtered = addons.filter((a) => a.id !== addon.id);
+  filtered.push(addon);
+  saveAddons(filtered);
+}
+
+export function updateAddonItem(addon: GlobalAddon): void {
+  const addons = getStoredAddons();
+  const updated = addons.map((a) => (a.id === addon.id ? addon : a));
+  saveAddons(updated);
+}
+
+export function deleteAddonItem(addonId: string): void {
+  const addons = getStoredAddons();
+  saveAddons(addons.filter((a) => a.id !== addonId));
+}
+
+export function toggleAddonActive(addonId: string): void {
+  const addons = getStoredAddons();
+  const target = addons.find((a) => a.id === addonId);
+  if (target) {
+    target.isAvailable = !target.isAvailable;
+    saveAddons(addons);
+  }
+}
+
+export function resetAddonsToDefault(): GlobalAddon[] {
+  saveAddons(DEFAULT_GLOBAL_ADDONS);
+  return DEFAULT_GLOBAL_ADDONS;
 }
 
 // 3. Recipes / BOM Management

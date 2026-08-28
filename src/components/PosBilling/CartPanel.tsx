@@ -606,12 +606,49 @@ export const CartPanel: React.FC<CartPanelProps> = ({
                       {item.type === 'beverage' && (
                         <span className="w-2.5 h-2.5 rounded-full bg-sky-600 shrink-0"></span>
                       )}
-                      <span className="text-xs font-bold text-[#2D241E] truncate">{item.name}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-bold text-[#2D241E] truncate">{item.name}</span>
+                        {item.isCombo && (
+                          <span className="bg-amber-100 text-amber-900 border border-amber-200 text-[9px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                            Combo
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    {/* Combo Selections (e.g. Burger + Pepsi) */}
+                    {item.comboSelections && item.comboSelections.length > 0 && (
+                      <div className="text-[10.5px] text-[#4B3621] font-medium pl-4 py-0.5 space-y-0.5">
+                        {item.comboSelections.map((cs, idx) => (
+                          <div key={idx} className="flex items-center gap-1">
+                            <span className="text-amber-800">•</span>
+                            <span className="text-[#8B7E74]">{cs.slotTitle}:</span>
+                            <strong className="text-[#2D241E]">{cs.selectedName}</strong>
+                            {cs.priceDelta ? (
+                              <span className="text-[10px] text-emerald-700 font-mono font-bold">
+                                (+₹{cs.priceDelta})
+                              </span>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {item.selectedVariant && (
+                      <div className="text-[10px] text-[#8B7E74] font-medium pl-4">
+                        Size: {item.selectedVariant.name}
+                      </div>
+                    )}
 
                     {item.addons && item.addons.length > 0 && (
                       <div className="text-[10px] text-[#8B7E74] font-medium pl-4">
-                        {item.addons.map((a) => a.name).join(', ')}
+                        + {item.addons.map((a) => a.name).join(', ')}
+                      </div>
+                    )}
+
+                    {item.notes && !item.isCombo && (
+                      <div className="text-[10px] text-[#555] italic pl-4">
+                        Note: {item.notes}
                       </div>
                     )}
 

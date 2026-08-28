@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MenuItem, Variant, Addon, CartItem } from '../../types';
-import { X, Check, Plus, Minus, Sparkles } from 'lucide-react';
+import { getStoredAddons } from '../../utils/storage';
+import { X, Check, Plus, Minus, Sparkles, Layers } from 'lucide-react';
 
 interface ItemCustomizerModalProps {
   item: MenuItem | null;
@@ -20,6 +21,29 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [notes, setNotes] = useState<string>('');
 
+  // Fetch updated add-ons with current prices from storage
+  const effectiveAddons: Addon[] = useMemo(() => {
+    if (!item) return [];
+    const storedGlobalAddons = getStoredAddons().filter((a) => a.isAvailable);
+
+    // If item has specific add-ons configured, update their prices from global storage
+    if (item.availableAddons && item.availableAddons.length > 0) {
+      return item.availableAddons.map((itemAddon) => {
+        const matched = storedGlobalAddons.find(
+          (g) => g.id === itemAddon.id || g.name.toLowerCase() === itemAddon.name.toLowerCase()
+        );
+        return matched ? { ...itemAddon, price: matched.price } : itemAddon;
+      });
+    }
+
+    // Default global add-ons applicable to savory / hot / cold items
+    return storedGlobalAddons.map((g) => ({
+      id: g.id,
+      name: g.name,
+      price: g.price,
+    }));
+  }, [item, isOpen]);
+
   useEffect(() => {
     if (item) {
       if (item.variants && item.variants.length > 0) {
@@ -31,7 +55,7 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
       setQuantity(1);
       setNotes('');
     }
-  }, [item]);
+  }, [item, isOpen]);
 
   if (!isOpen || !item) return null;
 
@@ -74,9 +98,9 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2D241E]/60 backdrop-blur-xs">
-      <div className="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl border border-[#E0D7D0] animate-in fade-in zoom-in duration-150">
+      <div className="bg-white rounded-xl max-w-md w-full overflow-hidden shadow-2xl border border-[#E0D7D0] animate-in fade-in zoom-in duration-150 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="p-4 bg-[#4B3621] text-white flex items-center justify-between">
+        <div className="p-4 bg-[#4B3621] text-white flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2">
               <span
@@ -102,7 +126,7 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
           {/* Variants / Portion Sizes */}
           {item.variants && item.variants.length > 0 && (
             <div>
@@ -134,14 +158,18 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
             </div>
           )}
 
-          {/* Add-ons */}
-          {item.availableAddons && item.availableAddons.length > 0 && (
+          {/* Add-ons & Extra Flavor */}
+          {effectiveAddons.length > 0 && (
             <div>
-              <label className="block text-xs font-bold text-[#2D241E] uppercase tracking-wider mb-2">
-                Optional Add-ons &amp; Extra Flavor
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-[#2D241E] uppercase tracking-wider flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Optional Add-ons &amp; Extra Flavor</span>
+                </label>
+                <span className="text-[10px] text-[#8B7E74]">Updated Rates</span>
+              </div>
               <div className="space-y-1.5">
-                {item.availableAddons.map((addon) => {
+                {effectiveAddons.map((addon) => {
                   const isChecked = selectedAddons.some((a) => a.id === addon.id);
                   return (
                     <button
@@ -192,7 +220,7 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
         </div>
 
         {/* Footer: Quantity & Add Button */}
-        <div className="p-4 bg-[#F9F7F5] border-t border-[#E0D7D0] flex items-center justify-between gap-3">
+        <div className="p-4 bg-[#F9F7F5] border-t border-[#E0D7D0] flex items-center justify-between gap-3 shrink-0">
           {/* Quantity selector */}
           <div className="flex items-center bg-white border border-[#E0D7D0] rounded-lg p-1 shadow-2xs">
             <button

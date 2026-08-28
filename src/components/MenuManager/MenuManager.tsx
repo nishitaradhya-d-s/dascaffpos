@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { MenuItem, Category, ItemType } from '../../types';
-import { getStoredCategories, saveCategories, getStoredCoupons } from '../../utils/storage';
+import { getStoredCategories, saveCategories, getStoredCoupons, getStoredAddons, getStoredCombos } from '../../utils/storage';
 import { CouponManagerSection } from './CouponManagerSection';
+import { AddonManagerSection } from './AddonManagerSection';
+import { ComboManagerSection } from './ComboManagerSection';
 import { 
   Plus, 
   Search, 
@@ -16,7 +18,8 @@ import {
   Save,
   FolderPlus,
   LayoutGrid,
-  Tag
+  Tag,
+  Layers
 } from 'lucide-react';
 
 interface MenuManagerProps {
@@ -30,7 +33,7 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
   onSaveMenu,
   onResetMenu,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'menu' | 'coupons'>('menu');
+  const [activeSubTab, setActiveSubTab] = useState<'menu' | 'coupons' | 'addons' | 'combos'>('menu');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('All');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
@@ -181,65 +184,124 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
   const couponsList = useMemo(() => getStoredCoupons(), [activeSubTab]);
   const activeCouponsCount = useMemo(() => couponsList.filter((c) => c.isActive).length, [couponsList]);
 
+  const addonsList = useMemo(() => getStoredAddons(), [activeSubTab]);
+  const activeAddonsCount = useMemo(() => addonsList.filter((a) => a.isAvailable).length, [addonsList]);
+
+  const combosList = useMemo(() => getStoredCombos(), [activeSubTab]);
+  const activeCombosCount = useMemo(() => combosList.filter((c) => c.isAvailable).length, [combosList]);
+
+  const renderSubTabBar = () => (
+    <div className="bg-[#4B3621] px-4 pt-3 flex items-center justify-between border-b border-[#3D2C1B] overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1.5 min-w-max">
+        {/* Tab 1: Menu Items */}
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('menu')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer ${
+            activeSubTab === 'menu'
+              ? 'bg-[#F4F1EE] text-[#4B3621] shadow-xs'
+              : 'text-amber-100/70 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <UtensilsCrossed className="w-4 h-4" />
+          <span>Menu Items &amp; Rates</span>
+          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+            activeSubTab === 'menu' ? 'bg-[#4B3621] text-amber-200' : 'bg-white/10 text-white'
+          }`}>
+            {menuItems.length}
+          </span>
+        </button>
+
+        {/* Tab 2: Coupons */}
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('coupons')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer ${
+            activeSubTab === 'coupons'
+              ? 'bg-[#F4F1EE] text-[#4B3621] shadow-xs'
+              : 'text-amber-100/70 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Tag className="w-4 h-4" />
+          <span>Coupon Codes</span>
+          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+            activeSubTab === 'coupons' ? 'bg-[#4B3621] text-amber-200' : 'bg-white/10 text-white'
+          }`}>
+            {activeCouponsCount}
+          </span>
+        </button>
+
+        {/* Tab 3: Add-ons & Extra Prices (Extra Cheese, Toppings, Dips) */}
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('addons')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer ${
+            activeSubTab === 'addons'
+              ? 'bg-[#F4F1EE] text-[#4B3621] shadow-xs'
+              : 'text-amber-100/70 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>Add-ons Rates (Extra Cheese &amp; Toppings)</span>
+          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+            activeSubTab === 'addons' ? 'bg-[#4B3621] text-amber-200' : 'bg-white/10 text-white'
+          }`}>
+            {activeAddonsCount}
+          </span>
+        </button>
+
+        {/* Tab 4: Combos & Meal Bundles Builder */}
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('combos')}
+          className={`flex items-center gap-2 px-3.5 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer ${
+            activeSubTab === 'combos'
+              ? 'bg-[#F4F1EE] text-[#4B3621] shadow-xs'
+              : 'text-amber-100/70 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-300" />
+          <span>Combos &amp; Meal Deals</span>
+          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+            activeSubTab === 'combos' ? 'bg-[#4B3621] text-amber-200' : 'bg-white/10 text-white'
+          }`}>
+            {activeCombosCount}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+
   if (activeSubTab === 'coupons') {
     return (
       <div className="h-full flex-1 flex flex-col bg-[#F4F1EE] overflow-hidden select-none">
-        {/* Sub-Tab Navigation Bar */}
-        <div className="bg-[#4B3621] px-4 pt-3 flex items-center justify-between border-b border-[#3D2C1B]">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('menu')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer text-amber-100/70 hover:text-white hover:bg-white/5"
-            >
-              <UtensilsCrossed className="w-4 h-4" />
-              <span>Menu Items &amp; Rates Catalog</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('coupons')}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer bg-[#F4F1EE] text-[#4B3621] shadow-xs"
-            >
-              <Tag className="w-4 h-4 text-[#4B3621]" />
-              <span>Coupon Codes &amp; Vouchers</span>
-              <span className="bg-[#4B3621] text-amber-200 text-[10px] font-mono px-1.5 py-0.2 rounded-full">
-                {activeCouponsCount}
-              </span>
-            </button>
-          </div>
-        </div>
-
+        {renderSubTabBar()}
         <CouponManagerSection />
+      </div>
+    );
+  }
+
+  if (activeSubTab === 'addons') {
+    return (
+      <div className="h-full flex-1 flex flex-col bg-[#F4F1EE] overflow-hidden select-none">
+        {renderSubTabBar()}
+        <AddonManagerSection />
+      </div>
+    );
+  }
+
+  if (activeSubTab === 'combos') {
+    return (
+      <div className="h-full flex-1 flex flex-col bg-[#F4F1EE] overflow-hidden select-none">
+        {renderSubTabBar()}
+        <ComboManagerSection menuItems={menuItems} />
       </div>
     );
   }
 
   return (
     <div className="h-full flex-1 flex flex-col bg-[#F4F1EE] overflow-hidden select-none">
-      {/* Sub-Tab Navigation Bar */}
-      <div className="bg-[#4B3621] px-4 pt-3 flex items-center justify-between border-b border-[#3D2C1B]">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('menu')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer bg-[#F4F1EE] text-[#4B3621] shadow-xs"
-          >
-            <UtensilsCrossed className="w-4 h-4 text-[#4B3621]" />
-            <span>Menu Items &amp; Rates Catalog</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSubTab('coupons')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-t-lg font-bold text-xs transition-colors cursor-pointer text-amber-100/70 hover:text-white hover:bg-white/5"
-          >
-            <Tag className="w-4 h-4" />
-            <span>Coupon Codes &amp; Vouchers</span>
-            <span className="bg-amber-200/20 text-amber-200 text-[10px] font-mono px-1.5 py-0.2 rounded-full">
-              {activeCouponsCount}
-            </span>
-          </button>
-        </div>
-      </div>
+      {renderSubTabBar()}
 
       {/* Top Header */}
       <div className="p-4 bg-white border-b border-[#E0D7D0] space-y-3 shrink-0">
