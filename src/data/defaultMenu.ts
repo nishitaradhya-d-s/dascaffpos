@@ -12,7 +12,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'cp-1',
     name: 'Creamy Corn Pizza',
-    category: 'Creamy Pizzas',
+    category: 'Pizzas',
     price: 69,
     type: 'veg',
     description: 'Golden sweet corn with rich creamy cheese sauce',
@@ -23,7 +23,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'cp-2',
     name: 'Onion Caps Pizza',
-    category: 'Creamy Pizzas',
+    category: 'Pizzas',
     price: 69,
     type: 'veg',
     description: 'Crisp diced onions and green capsicum with creamy layer',
@@ -33,7 +33,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'cp-3',
     name: 'Mushroom Classic Pizza',
-    category: 'Creamy Pizzas',
+    category: 'Pizzas',
     price: 89,
     type: 'veg',
     description: 'Tender sauteed mushrooms with herb seasoning and creamy cheese',
@@ -43,7 +43,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'cp-4',
     name: 'Onion Caps & Paneer Pizza',
-    category: 'Creamy Pizzas',
+    category: 'Pizzas',
     price: 119,
     type: 'veg',
     description: 'Fresh paneer cubes, crunchy capsicum and onions',
@@ -53,7 +53,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'cp-5',
     name: 'Corn & Capsicum Pizza',
-    category: 'Creamy Pizzas',
+    category: 'Pizzas',
     price: 119,
     type: 'veg',
     description: 'Juicy sweet corn, crisp capsicum and extra cheese layer',
@@ -63,7 +63,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'cp-6',
     name: 'Classic Sausage Pizza',
-    category: 'Creamy Pizzas',
+    category: 'Pizzas',
     price: 129,
     type: 'non-veg',
     description: 'Sliced chicken sausage tossed in rich creamy herb sauce',
@@ -74,7 +74,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'cp-7',
     name: 'Chatpata Chilli Pizza',
-    category: 'Creamy Pizzas',
+    category: 'Pizzas',
     price: 89,
     type: 'veg',
     description: 'Tangy spiced peppers, red paprika and melted cheese',
@@ -86,7 +86,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'fp-1',
     name: 'Margherita Pizza',
-    category: 'Fav Pizzas',
+    category: 'Pizzas',
     price: 129,
     type: 'veg',
     description: 'Classic Italian mozzarella cheese with aromatic herb tomato base',
@@ -101,7 +101,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'fp-2',
     name: 'Schezwan Margherita Pizza',
-    category: 'Fav Pizzas',
+    category: 'Pizzas',
     price: 159,
     type: 'veg',
     description: 'Fiery Schezwan sauce base topped with molten mozzarella',
@@ -115,7 +115,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'fp-3',
     name: 'Corn & Cheese Fav Pizza',
-    category: 'Fav Pizzas',
+    category: 'Pizzas',
     price: 159,
     type: 'veg',
     description: 'Double layer melted mozzarella loaded with tender sweet corn',
@@ -129,7 +129,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'fp-4',
     name: 'Herb Veggie Pizza',
-    category: 'Fav Pizzas',
+    category: 'Pizzas',
     price: 179,
     type: 'veg',
     description: 'Italian herbs, black olives, sweet corn, capsicum and mozzarella',
@@ -143,7 +143,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'fp-5',
     name: 'Chatpata Chilli Fav Pizza',
-    category: 'Fav Pizzas',
+    category: 'Pizzas',
     price: 89,
     type: 'veg',
     description: 'Zesty green chillies, spicy seasoning and hot melted cheese',
@@ -159,7 +159,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'bp-1',
     name: 'Mexican Banger Pizza',
-    category: 'Banger Pizzas',
+    category: 'Pizzas',
     price: 229,
     type: 'veg',
     description: 'Mexican salsa base, jalapenos, sweet corn, crisp onions & mozzarella',
@@ -174,7 +174,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'bp-2',
     name: 'Max Veggie Banger Pizza',
-    category: 'Banger Pizzas',
+    category: 'Pizzas',
     price: 259,
     type: 'veg',
     description: 'Loaded paneer, mushrooms, black olives, jalapenos, corn & capsicum',
@@ -190,7 +190,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'pp-1',
     name: 'Thandoori Paneer Pizza',
-    category: 'Paneer Pizzas',
+    category: 'Pizzas',
     price: 229,
     type: 'veg',
     description: 'Smoky tandoori marinated paneer cubes, capsicum and red onions',
@@ -205,7 +205,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'pp-2',
     name: 'Makhni Paneer Pizza',
-    category: 'Paneer Pizzas',
+    category: 'Pizzas',
     price: 229,
     type: 'veg',
     description: 'Rich royal makhni sauce, roasted paneer, butter glaze & cheese',
@@ -221,7 +221,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'ckp-1',
     name: 'Schezwan Chicken Pizza',
-    category: 'Chicken Pizzas',
+    category: 'Pizzas',
     price: 209,
     type: 'non-veg',
     description: 'Spicy Schezwan tossed chicken chunks with onion and mozzarella',
@@ -236,7 +236,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'ckp-2',
     name: 'Chicken Pepperoni Pizza',
-    category: 'Chicken Pizzas',
+    category: 'Pizzas',
     price: 209,
     type: 'non-veg',
     description: 'Smoky spiced chicken pepperoni rounds with melted cheese',
@@ -250,7 +250,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'ckp-3',
     name: 'Thandoori Chicken Pizza',
-    category: 'Chicken Pizzas',
+    category: 'Pizzas',
     price: 269,
     type: 'non-veg',
     description: 'Char-grilled tandoori chicken, roasted peppers and aromatic spices',
@@ -265,7 +265,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'ckp-4',
     name: 'Malai Chicken Heritage Pizza',
-    category: 'Chicken Pizzas',
+    category: 'Pizzas',
     price: 269,
     type: 'non-veg',
     description: 'Creamy malai marinated chicken, cashew cream sauce and cheese',
@@ -279,7 +279,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'ckp-5',
     name: 'Kheema Fusion Pizza',
-    category: 'Chicken Pizzas',
+    category: 'Pizzas',
     price: 259,
     type: 'non-veg',
     description: 'Spiced minced chicken kheema with cilantro, onions and cheese',
@@ -344,12 +344,44 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
     isPopular: true,
     availableAddons: STANDARD_ADDONS,
   },
+  {
+    id: 'bg-6',
+    name: 'Crispy Chicken Burger',
+    category: 'Burgers',
+    price: 139,
+    type: 'non-veg',
+    description: 'Juicy fried crispy chicken breast patty with herb mayo & lettuce',
+    isAvailable: true,
+    isPopular: true,
+    availableAddons: STANDARD_ADDONS,
+  },
+  {
+    id: 'bg-7',
+    name: 'Spicy Schezwan Chicken Burger',
+    category: 'Burgers',
+    price: 149,
+    type: 'non-veg',
+    description: 'Fiery schezwan tossed chicken patty with melted cheese & onions',
+    isAvailable: true,
+    availableAddons: STANDARD_ADDONS,
+  },
+  {
+    id: 'bg-8',
+    name: 'Tandoori Chicken Burger',
+    category: 'Burgers',
+    price: 159,
+    type: 'non-veg',
+    description: 'Smoky spiced tandoori chicken patty with creamy mint mayo & cheese',
+    isAvailable: true,
+    isPopular: true,
+    availableAddons: STANDARD_ADDONS,
+  },
 
   // 7. SANDWICH
   {
     id: 'sw-1',
     name: 'Veg Fusion Sandwich',
-    category: 'Sandwich',
+    category: 'Sandwiches',
     price: 59,
     type: 'veg',
     description: 'Garden fresh cucumber, tomato, beetroot with green chutney',
@@ -359,7 +391,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'sw-2',
     name: 'Corn & Cheese Sandwich',
-    category: 'Sandwich',
+    category: 'Sandwiches',
     price: 79,
     type: 'veg',
     description: 'Golden sweet corn with molten melted cheddar and mozzarella',
@@ -370,7 +402,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'sw-3',
     name: 'Fresh Harvest Sandwich',
-    category: 'Sandwich',
+    category: 'Sandwiches',
     price: 99,
     type: 'veg',
     description: 'Grilled bell peppers, crisp lettuce, cheese and oregano blend',
@@ -380,7 +412,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'sw-4',
     name: 'Fire Witch Sandwich',
-    category: 'Sandwich',
+    category: 'Sandwiches',
     price: 99,
     type: 'veg',
     description: 'Spicy chili seasoning, red paprika, jalapenos and hot cheese blend',
@@ -390,7 +422,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'sw-5',
     name: 'Peri Peri Sandwich',
-    category: 'Sandwich',
+    category: 'Sandwiches',
     price: 109,
     type: 'veg',
     description: 'Tangy African bird eye peri-peri tossed filling with cheese',
@@ -400,7 +432,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'sw-6',
     name: 'Das Special Sandwich',
-    category: 'Sandwich',
+    category: 'Sandwiches',
     price: 119,
     type: 'veg',
     description: 'Triple decker sandwich stuffed with paneer, veggies and cheese melt',
@@ -477,7 +509,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'mj-1',
     name: 'Lemonade',
-    category: 'Mojitos',
+    category: 'Mojitos & Beverages',
     price: 69,
     type: 'beverage',
     description: 'Fresh squeezed lemon with chilled soda and mint sprigs',
@@ -486,7 +518,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'mj-2',
     name: 'Spice Cola',
-    category: 'Mojitos',
+    category: 'Mojitos & Beverages',
     price: 69,
     type: 'beverage',
     description: 'Chilled fizzy cola infused with chatpata masala and fresh lime',
@@ -495,7 +527,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'mj-3',
     name: 'Lemon Mint Mojito',
-    category: 'Mojitos',
+    category: 'Mojitos & Beverages',
     price: 99,
     type: 'beverage',
     description: 'Muddled fresh mint leaves, sparkling soda, lime and crushed ice',
@@ -505,7 +537,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'mj-4',
     name: 'Blue Splash Mojito',
-    category: 'Mojitos',
+    category: 'Mojitos & Beverages',
     price: 89,
     type: 'beverage',
     description: 'Refreshing blue curacao citrus cooler with chilled soda',
@@ -515,7 +547,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'mj-5',
     name: 'Green Seo Mojito',
-    category: 'Mojitos',
+    category: 'Mojitos & Beverages',
     price: 89,
     type: 'beverage',
     description: 'Crisp green apple refresher with sparkling fizz and mint',
@@ -524,7 +556,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'mj-6',
     name: 'Jamun Thinni',
-    category: 'Mojitos',
+    category: 'Mojitos & Beverages',
     price: 89,
     type: 'beverage',
     description: 'Authentic Indian black plum berry cooler with black salt',
@@ -533,7 +565,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'mj-7',
     name: 'Rooh Afza Cooler',
-    category: 'Mojitos',
+    category: 'Mojitos & Beverages',
     price: 39,
     type: 'beverage',
     description: 'Traditional aromatic rose refresher with crushed ice',
@@ -542,7 +574,7 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
   {
     id: 'mj-8',
     name: 'Nannari Sharbat',
-    category: 'Mojitos',
+    category: 'Mojitos & Beverages',
     price: 79,
     type: 'beverage',
     description: 'Herbal root extract cooling beverage with lemon splash',
@@ -795,44 +827,18 @@ export const DEFAULT_MENU_ITEMS: MenuItem[] = [
     isAvailable: true,
     availableAddons: STANDARD_ADDONS,
   },
-
-  // 14. COMBOS
-  {
-    id: 'cb-1',
-    name: 'Fries + Coke Perfect Combo',
-    category: 'Combos',
-    price: 99,
-    type: 'veg',
-    description: 'Crispy golden fries served with chilled Coke/Cola refresher',
-    isAvailable: true,
-    isPopular: true,
-  },
-  {
-    id: 'cb-2',
-    name: '4 Creamy Pizzas Value Feast',
-    category: 'Combos',
-    price: 299,
-    type: 'veg',
-    description: 'Choice of 4 delicious creamy personal pizzas - Best value savings',
-    isAvailable: true,
-    isPopular: true,
-  },
 ];
 
 export const DEFAULT_CATEGORIES: string[] = [
   'All',
-  'Creamy Pizzas',
-  'Fav Pizzas',
-  'Banger Pizzas',
-  'Paneer Pizzas',
-  'Chicken Pizzas',
+  'Pizzas',
   'Burgers',
-  'Sandwich',
-  'Wraps',
-  'Mojitos',
-  'Sides',
   'French Fries',
-  'Maggies',
+  'Sides',
+  'Sandwiches',
+  'Wraps',
   'Pastas',
-  'Combos',
+  'Maggies',
+  'Mojitos & Beverages',
 ];
+

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { MenuItem, Category, ItemType } from '../../types';
-import { getStoredCategories, saveCategories, getStoredCoupons, getStoredAddons, getStoredCombos } from '../../utils/storage';
+import { getStoredCategories, saveCategories, getStoredCoupons, getStoredAddons, getStoredCombos, normalizeCategoryName } from '../../utils/storage';
 import { CouponManagerSection } from './CouponManagerSection';
 import { AddonManagerSection } from './AddonManagerSection';
 import { ComboManagerSection } from './ComboManagerSection';
@@ -19,7 +19,8 @@ import {
   FolderPlus,
   LayoutGrid,
   Tag,
-  Layers
+  Layers,
+  Utensils
 } from 'lucide-react';
 
 interface MenuManagerProps {
@@ -39,13 +40,22 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Dynamic Categories / Sections
+  // Dynamic Categories / Sections with strict deduplication
   const [categories, setCategories] = useState<string[]>(() => {
-    const stored = getStoredCategories();
-    // Also include any categories present in current menu items
-    const fromItems = Array.from(new Set(menuItems.map((m) => m.category)));
-    const merged = Array.from(new Set([...stored, ...fromItems]));
-    return merged;
+    const stored = getStoredCategories().map(normalizeCategoryName);
+    const fromItems = menuItems.map((m) => normalizeCategoryName(m.category));
+    const seen = new Set<string>();
+    const cleaned: string[] = [];
+    [...stored, ...fromItems].forEach((c) => {
+      if (!c) return;
+      const lower = c.toLowerCase();
+      if (lower === 'combos' || lower === 'all') return;
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        cleaned.push(c);
+      }
+    });
+    return cleaned;
   });
 
   const [isManageSectionsOpen, setIsManageSectionsOpen] = useState(false);
@@ -53,7 +63,7 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
 
   // Form State for editing / creating
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Creamy Pizzas');
+  const [category, setCategory] = useState('Pizzas');
   const [price, setPrice] = useState<number>(0);
   const [type, setType] = useState<ItemType>('veg');
   const [description, setDescription] = useState('');
@@ -63,12 +73,13 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
   const allCategoryPills = useMemo(() => ['All', ...categories], [categories]);
 
   const filteredItems = menuItems.filter((i) => {
-    if (selectedCat !== 'All' && i.category !== selectedCat) return false;
+    const norm = normalizeCategoryName(i.category);
+    if (selectedCat !== 'All' && norm !== selectedCat) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
         i.name.toLowerCase().includes(q) ||
-        i.category.toLowerCase().includes(q) ||
+        (i.category && i.category.toLowerCase().includes(q)) ||
         (i.description && i.description.toLowerCase().includes(q))
       );
     }
@@ -79,7 +90,7 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
     setEditingItem(item);
     setIsCreating(false);
     setName(item.name);
-    setCategory(item.category);
+    setCategory(normalizeCategoryName(item.category));
     setPrice(item.price);
     setType(item.type);
     setDescription(item.description || '');
@@ -91,7 +102,8 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
     setEditingItem(null);
     setIsCreating(true);
     setName('');
-    setCategory(defaultCategory || (selectedCat !== 'All' ? selectedCat : categories[0] || 'Creamy Pizzas'));
+    const targetCat = defaultCategory || (selectedCat !== 'All' ? selectedCat : categories[0] || 'Pizzas');
+    setCategory(normalizeCategoryName(targetCat));
     setPrice(99);
     setType('veg');
     setDescription('');
@@ -102,12 +114,13 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
   const handleSaveItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || price < 0) return;
+    const finalCategory = normalizeCategoryName(category);
 
     if (isCreating) {
       const newItem: MenuItem = {
         id: `item-${Date.now()}`,
         name: name.trim(),
-        category,
+        category: finalCategory,
         price,
         type,
         description: description.trim() || undefined,
@@ -121,7 +134,7 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
           return {
             ...it,
             name: name.trim(),
-            category,
+            category: finalCategory,
             price,
             type,
             description: description.trim() || undefined,
@@ -487,128 +500,153 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
           </div>
         </div>
 
-        {/* Edit / Create Form Panel */}
+        {/* Edit / Create Form Modal Popup */}
         {(editingItem || isCreating) && (
-          <div className="w-full lg:w-80 bg-white rounded-xl p-4 border border-[#E0D7D0] shadow-sm space-y-4 shrink-0">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E0D7D0]">
-              <h3 className="text-sm font-bold text-[#2D241E] uppercase">
-                {isCreating ? 'Create Menu Item' : 'Edit Menu Item'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingItem(null);
-                  setIsCreating(false);
-                }}
-                className="p-1 text-[#8B7E74] hover:text-[#2D241E] cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveItem} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-bold text-[#2D241E] mb-1">Item Name *</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Belgian Chocolate Shake"
-                  required
-                  className="w-full bg-white border border-[#E0D7D0] rounded-lg p-2 font-medium text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-bold text-[#2D241E] mb-1">Section / Category *</label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full bg-white border border-[#E0D7D0] rounded-lg p-2 text-[#2D241E] font-medium focus:outline-hidden focus:border-[#4B3621]"
-                  >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2D241E]/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#E0D7D0] animate-in zoom-in-95 duration-150">
+              <div className="p-4 bg-[#4B3621] text-white flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold">
+                    <Utensils className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-wider font-cinzel">
+                      {isCreating ? 'Add New Menu Item' : 'Edit Menu Item Details'}
+                    </h3>
+                    <p className="text-[11px] text-amber-200">
+                      Configure rates, dietary category, description & availability
+                    </p>
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block font-bold text-[#2D241E] mb-1">Price (₹) *</label>
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-                    min="0"
-                    required
-                    className="w-full bg-white border border-[#E0D7D0] rounded-lg p-2 text-[#2D241E] font-mono font-bold focus:outline-hidden focus:border-[#4B3621]"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-[#2D241E] mb-1">Dietary Type</label>
-                <div className="grid grid-cols-3 gap-1">
-                  {(['veg', 'non-veg', 'beverage'] as ItemType[]).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setType(t)}
-                      className={`p-2 rounded-lg text-center font-bold capitalize transition-all cursor-pointer ${
-                        type === t
-                          ? 'bg-[#4B3621] text-white shadow-2xs'
-                          : 'bg-white border border-[#E0D7D0] text-[#8B7E74] hover:text-[#2D241E]'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-bold text-[#2D241E] mb-1">Description</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={2}
-                  placeholder="Ingredients and description for customer and KOT"
-                  className="w-full bg-white border border-[#E0D7D0] rounded-lg p-2 text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
-                />
-              </div>
-
-              <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isAvailable}
-                    onChange={(e) => setIsAvailable(e.target.checked)}
-                    className="rounded-md border-[#E0D7D0] text-[#4B3621] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="font-bold text-[#2D241E]">In Stock</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isPopular}
-                    onChange={(e) => setIsPopular(e.target.checked)}
-                    className="rounded-md border-[#E0D7D0] text-[#4B3621] w-4 h-4 cursor-pointer"
-                  />
-                  <span className="font-bold text-[#2D241E]">Best Seller</span>
-                </label>
-              </div>
-
-              <div className="pt-2 flex gap-2">
                 <button
-                  type="submit"
-                  className="flex-1 py-2.5 px-4 bg-[#4B3621] hover:bg-[#3D2C1B] active:bg-[#2D241E] text-white font-bold rounded-lg text-xs transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  type="button"
+                  onClick={() => {
+                    setEditingItem(null);
+                    setIsCreating(false);
+                  }}
+                  className="p-1.5 rounded-lg bg-white/10 text-white/70 hover:text-white hover:bg-white/20 transition-colors cursor-pointer"
                 >
-                  <Save className="w-4 h-4" />
-                  <span>Save Item</span>
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </form>
+
+              <form onSubmit={handleSaveItem} className="p-5 space-y-3.5 text-xs">
+                <div>
+                  <label className="block font-bold text-[#2D241E] mb-1">Item Name *</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Belgian Chocolate Shake"
+                    required
+                    className="w-full bg-[#F9F7F5] border border-[#E0D7D0] rounded-lg p-2.5 font-bold text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-[#2D241E] mb-1">Section / Category *</label>
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="w-full bg-[#F9F7F5] border border-[#E0D7D0] rounded-lg p-2.5 text-[#2D241E] font-bold focus:outline-hidden focus:border-[#4B3621]"
+                    >
+                      {categories.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-[#2D241E] mb-1">Price (₹) *</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-[#8B7E74]">₹</span>
+                      <input
+                        type="number"
+                        value={price}
+                        onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
+                        min="0"
+                        required
+                        className="w-full bg-[#F9F7F5] border border-[#E0D7D0] rounded-lg py-2.5 pl-7 pr-3 text-[#2D241E] font-mono font-bold focus:outline-hidden focus:border-[#4B3621]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#2D241E] mb-1">Dietary Type</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['veg', 'non-veg', 'beverage'] as ItemType[]).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setType(t)}
+                        className={`py-2 rounded-lg text-center font-bold capitalize transition-all cursor-pointer border ${
+                          type === t
+                            ? 'bg-[#4B3621] text-white border-[#4B3621]'
+                            : 'bg-white border-[#E0D7D0] text-[#8B7E74] hover:bg-[#F4F1EE]'
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#2D241E] mb-1">Description</label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={2}
+                    placeholder="Ingredients and description for customer and KOT"
+                    className="w-full bg-[#F9F7F5] border border-[#E0D7D0] rounded-lg p-2.5 text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-1 pb-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isAvailable}
+                      onChange={(e) => setIsAvailable(e.target.checked)}
+                      className="rounded-md border-[#E0D7D0] text-[#4B3621] w-4 h-4 cursor-pointer"
+                    />
+                    <span className="font-bold text-[#2D241E]">In Stock (Available in Billing)</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isPopular}
+                      onChange={(e) => setIsPopular(e.target.checked)}
+                      className="rounded-md border-[#E0D7D0] text-[#4B3621] w-4 h-4 cursor-pointer"
+                    />
+                    <span className="font-bold text-[#2D241E]">Best Seller Tag</span>
+                  </label>
+                </div>
+
+                <div className="pt-3 flex justify-end gap-2 border-t border-[#E0D7D0]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingItem(null);
+                      setIsCreating(false);
+                    }}
+                    className="px-4 py-2 rounded-lg border border-[#E0D7D0] font-bold text-[#8B7E74] hover:bg-[#F4F1EE] cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-[#4B3621] hover:bg-[#3D2C1B] active:bg-[#2D241E] text-white font-bold rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{isCreating ? 'Create Item' : 'Save Changes'}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>

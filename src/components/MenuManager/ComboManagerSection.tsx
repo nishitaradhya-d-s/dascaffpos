@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ComboItem, ComboSlot, ComboSlotOption, ItemType, MenuItem } from '../../types';
 import { 
   getStoredCombos, 
@@ -7,7 +7,8 @@ import {
   deleteComboItem, 
   toggleComboActive, 
   resetCombosToDefault,
-  getStoredCategories 
+  getStoredCategories,
+  normalizeCategoryName 
 } from '../../utils/storage';
 import { 
   Plus, 
@@ -35,6 +36,7 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
   const [combos, setCombos] = useState<ComboItem[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [editingComboId, setEditingComboId] = useState<string | null>(null);
+  const modalScrollRef = useRef<HTMLDivElement>(null);
 
   // Form states
   const [name, setName] = useState('');
@@ -130,7 +132,7 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
     const defaultCat = categories[0] || 'Menu';
     const newSlot: ComboSlot = {
       id: `slot-${Date.now()}`,
-      title: slotType === 'category' ? `Choose from ${defaultCat}` : 'Select 1 Drink / Unlisted Item',
+      title: slotType === 'category' ? `Choose 1 ${defaultCat}` : 'Select 1 Drink / Unlisted Item',
       type: slotType,
       category: slotType === 'category' ? defaultCat : undefined,
       requiredCount: 1,
@@ -141,6 +143,15 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
       ] : undefined,
     };
     setSlots([...slots, newSlot]);
+    // Auto-scroll to the newly added slot immediately
+    setTimeout(() => {
+      if (modalScrollRef.current) {
+        modalScrollRef.current.scrollTo({
+          top: modalScrollRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }
+    }, 50);
   };
 
   const handleRemoveSlot = (slotId: string) => {
@@ -301,28 +312,38 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
       {/* Main Container */}
       <div className="flex-1 p-4 overflow-y-auto">
         <div className="max-w-5xl mx-auto space-y-4">
-          {/* Create/Edit Combo Modal / Drawer */}
+          {/* Create/Edit Combo Modal Popup Dialog */}
           {isCreating && (
-            <div className="bg-white rounded-xl border border-amber-300 shadow-md p-5 space-y-4 animate-in fade-in">
-              <div className="flex items-center justify-between border-b border-[#E0D7D0] pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                  <h3 className="text-sm font-bold text-[#4B3621] uppercase tracking-wider font-cinzel">
-                    {editingComboId ? 'Edit Combo Meal' : 'Build New Combo Meal'}
-                  </h3>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#2D241E]/60 backdrop-blur-xs animate-in fade-in duration-150">
+              <div className="bg-white rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl border border-[#E0D7D0] flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
+                {/* Modal Header */}
+                <div className="p-4 bg-[#4B3621] text-white flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold">
+                      <PackageOpen className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider font-cinzel">
+                        {editingComboId ? 'Edit Combo Meal Deal' : 'Build New Combo Meal Deal'}
+                      </h3>
+                      <p className="text-[11px] text-amber-200 font-medium">
+                        Configure bundle price, categories & unlisted custom items
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreating(false)}
+                    className="p-1.5 rounded-lg bg-white/10 text-white/70 hover:text-white hover:bg-white/20 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setIsCreating(false)}
-                  className="p-1 rounded-md text-[#8B7E74] hover:text-[#2D241E] hover:bg-[#F4F1EE]"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
 
-              <form onSubmit={handleSaveCombo} className="space-y-4">
-                {/* Basic Information */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <form onSubmit={handleSaveCombo} className="flex flex-col flex-1 overflow-hidden">
+                  <div ref={modalScrollRef} className="p-5 space-y-4 overflow-y-auto flex-1">
+                    {/* Basic Information */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="sm:col-span-2">
                     <label className="block text-[11px] font-bold text-[#4B3621] mb-1">
                       Combo Name *
@@ -577,26 +598,28 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
                       </div>
                     ))}
                   </div>
-                </div>
+                    </div>
+                  </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-2 pt-3 border-t border-[#E0D7D0]">
-                  <button
-                    type="button"
-                    onClick={() => setIsCreating(false)}
-                    className="px-4 py-2 rounded-lg border border-[#E0D7D0] text-xs font-bold text-[#8B7E74] hover:bg-[#F4F1EE]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-lg bg-[#4B3621] hover:bg-[#3D2C1B] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
-                  >
-                    <Save className="w-3.5 h-3.5" />
-                    <span>{editingComboId ? 'Update Combo Meal' : 'Save Combo Meal'}</span>
-                  </button>
-                </div>
-              </form>
+                  {/* Actions Footer */}
+                  <div className="flex justify-end gap-2 p-4 bg-[#F9F7F5] border-t border-[#E0D7D0] shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreating(false)}
+                      className="px-4 py-2 rounded-lg border border-[#E0D7D0] text-xs font-bold text-[#8B7E74] hover:bg-[#F4F1EE] cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-lg bg-[#4B3621] hover:bg-[#3D2C1B] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{editingComboId ? 'Update Combo Meal' : 'Save Combo Meal'}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           )}
 

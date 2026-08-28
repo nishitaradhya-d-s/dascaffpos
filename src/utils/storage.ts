@@ -88,7 +88,7 @@ export const DEFAULT_COMBOS: ComboItem[] = [
         id: 'slot-1',
         title: 'Choose your Burger',
         type: 'category',
-        category: 'Burger',
+        category: 'Burgers',
         requiredCount: 1,
       },
       {
@@ -108,7 +108,7 @@ export const DEFAULT_COMBOS: ComboItem[] = [
         id: 'slot-3',
         title: 'Choose your Side / Fries',
         type: 'mixed',
-        category: 'Fries & Sides',
+        category: 'French Fries',
         requiredCount: 1,
         customOptions: [
           { id: 'opt-fries-std', name: 'Classic Salted Fries', type: 'veg', isCustomUnlisted: true },
@@ -121,7 +121,7 @@ export const DEFAULT_COMBOS: ComboItem[] = [
     id: 'combo-2',
     name: 'Personal Pizza & Cold Drink Deal',
     price: 189,
-    description: '1 Pizza from Creamy Pizzas + 1 Cold Beverage + 1 Free Dip',
+    description: '1 Pizza from Menu + 1 Cold Beverage + 1 Free Dip',
     type: 'veg',
     isAvailable: true,
     isPopular: true,
@@ -130,7 +130,7 @@ export const DEFAULT_COMBOS: ComboItem[] = [
         id: 'slot-1',
         title: 'Choose your Pizza',
         type: 'category',
-        category: 'Creamy Pizzas',
+        category: 'Pizzas',
         requiredCount: 1,
       },
       {
@@ -162,16 +162,16 @@ export const DEFAULT_COMBOS: ComboItem[] = [
     id: 'combo-3',
     name: 'Pasta & Cold Drink Combo',
     price: 199,
-    description: '1 Pasta from Pasta & Rolls + 1 Beverage (Coke / Pepsi / Sprite) + Garlic Bread',
+    description: '1 Pasta from Menu + 1 Beverage (Coke / Pepsi / Sprite) + Garlic Bread',
     type: 'veg',
     isAvailable: true,
     isPopular: false,
     slots: [
       {
         id: 'slot-1',
-        title: 'Choose your Pasta / Roll',
+        title: 'Choose your Pasta',
         type: 'category',
-        category: 'Pasta & Rolls',
+        category: 'Pastas',
         requiredCount: 1,
       },
       {
@@ -184,6 +184,86 @@ export const DEFAULT_COMBOS: ComboItem[] = [
           { id: 'opt-pepsi', name: 'Pepsi (300ml)', type: 'beverage', isCustomUnlisted: true },
           { id: 'opt-sprite', name: 'Sprite (300ml)', type: 'beverage', isCustomUnlisted: true },
           { id: 'opt-water', name: 'Packaged Water (500ml)', type: 'beverage', isCustomUnlisted: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'combo-4',
+    name: 'Chicken Burger & Cold Drink Deal',
+    price: 199,
+    description: '1 Non-Veg Chicken Burger + 1 Cold Beverage + Salted Fries',
+    type: 'non-veg',
+    isAvailable: true,
+    isPopular: true,
+    slots: [
+      {
+        id: 'slot-1',
+        title: 'Choose Chicken Burger',
+        type: 'category',
+        category: 'Burgers',
+        requiredCount: 1,
+      },
+      {
+        id: 'slot-2',
+        title: 'Choose Cold Drink',
+        type: 'custom_items',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'opt-coke', name: 'Coca Cola (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-pepsi', name: 'Pepsi (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-thumsup', name: 'Thums Up (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-sprite', name: 'Sprite (300ml)', type: 'beverage', isCustomUnlisted: true },
+        ],
+      },
+      {
+        id: 'slot-3',
+        title: 'Choose Side / Fries',
+        type: 'mixed',
+        category: 'French Fries',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'opt-fries-std', name: 'Classic Salted Fries', type: 'veg', isCustomUnlisted: true },
+          { id: 'opt-popcorn', name: 'Chicken Popcorn', type: 'non-veg', priceDelta: 20, isCustomUnlisted: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'combo-5',
+    name: 'Non-Veg Pizza & Drink Feast',
+    price: 249,
+    description: '1 Chicken Pizza from Menu + 1 Cold Drink + Free Dip',
+    type: 'non-veg',
+    isAvailable: true,
+    isPopular: true,
+    slots: [
+      {
+        id: 'slot-1',
+        title: 'Choose Chicken Pizza',
+        type: 'category',
+        category: 'Pizzas',
+        requiredCount: 1,
+      },
+      {
+        id: 'slot-2',
+        title: 'Choose Cold Beverage',
+        type: 'custom_items',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'opt-coke', name: 'Coca Cola (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-pepsi', name: 'Pepsi (300ml)', type: 'beverage', isCustomUnlisted: true },
+          { id: 'opt-7up', name: '7UP (300ml)', type: 'beverage', isCustomUnlisted: true },
+        ],
+      },
+      {
+        id: 'slot-3',
+        title: 'Select Free Dip',
+        type: 'custom_items',
+        requiredCount: 1,
+        customOptions: [
+          { id: 'dip-cheese', name: 'Cheesy Garlic Dip', type: 'veg', isCustomUnlisted: true },
+          { id: 'dip-peri', name: 'Spicy Peri Peri Dip', type: 'veg', isCustomUnlisted: true },
         ],
       },
     ],
@@ -373,13 +453,50 @@ export function saveSettings(settings: CafeSettings): void {
   safeSet(KEYS.SETTINGS, settings);
 }
 
+export const STANDARD_CATEGORIES: string[] = [
+  'Pizzas',
+  'Burgers',
+  'French Fries',
+  'Sides',
+  'Sandwiches',
+  'Wraps',
+  'Pastas',
+  'Maggies',
+  'Mojitos & Beverages',
+  'Desserts',
+  'Coffee & Tea',
+];
+
+export function normalizeCategoryName(cat: string): string {
+  const c = String(cat || '').trim();
+  const lower = c.toLowerCase();
+  if (!c) return 'Pizzas';
+  if (lower === 'burger') return 'Burgers';
+  if (lower === 'pizza' || lower === 'creamy pizzas' || lower === 'fav pizzas' || lower === 'banger pizzas' || lower === 'paneer pizzas' || lower === 'chicken pizzas') return 'Pizzas';
+  if (lower === 'sandwich') return 'Sandwiches';
+  if (lower === 'wrap') return 'Wraps';
+  if (lower === 'pasta' || lower === 'pasta & rolls' || lower === 'pastas & rolls') return 'Pastas';
+  if (lower === 'maggie') return 'Maggies';
+  if (lower === 'mojito' || lower === 'mojitos' || lower === 'beverages') return 'Mojitos & Beverages';
+  if (lower === 'french fries & sides' || lower === 'fries & sides' || lower === 'fries') return 'French Fries';
+  if (lower === 'dessert') return 'Desserts';
+  return c;
+}
+
 // 2. Menu Items & Categories
 export function getStoredMenu(): MenuItem[] {
-  return safeParse<MenuItem[]>(KEYS.MENU, DEFAULT_MENU_ITEMS);
+  const items = safeParse<MenuItem[]>(KEYS.MENU, DEFAULT_MENU_ITEMS);
+  return items
+    .filter((m) => m && m.category !== 'Combos')
+    .map((m) => ({
+      ...m,
+      category: normalizeCategoryName(m.category),
+    }));
 }
 
 export function saveMenu(menu: MenuItem[]): void {
-  safeSet(KEYS.MENU, menu);
+  const sanitized = menu.filter((m) => m && m.category !== 'Combos');
+  safeSet(KEYS.MENU, sanitized);
 }
 
 export function resetMenuToDefault(): MenuItem[] {
@@ -388,12 +505,37 @@ export function resetMenuToDefault(): MenuItem[] {
 }
 
 export function getStoredCategories(): string[] {
-  const defaultCats = ['Pizza', 'Burger', 'Fries & Sides', 'Beverages', 'Desserts', 'Pasta & Rolls', 'Combos', 'Coffee & Tea'];
-  return safeParse<string[]>(KEYS.CATEGORIES, defaultCats);
+  const raw = safeParse<string[]>(KEYS.CATEGORIES, STANDARD_CATEGORIES);
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return STANDARD_CATEGORIES;
+  }
+  const seen = new Set<string>();
+  const sanitized: string[] = [];
+  raw.forEach((c) => {
+    if (!c) return;
+    const norm = normalizeCategoryName(c);
+    if (norm.toLowerCase() === 'combos' || norm.toLowerCase() === 'all') return;
+    if (!seen.has(norm.toLowerCase())) {
+      seen.add(norm.toLowerCase());
+      sanitized.push(norm);
+    }
+  });
+  return sanitized.length > 0 ? sanitized : STANDARD_CATEGORIES;
 }
 
 export function saveCategories(categories: string[]): void {
-  safeSet(KEYS.CATEGORIES, categories);
+  const seen = new Set<string>();
+  const sanitized: string[] = [];
+  categories.forEach((c) => {
+    if (!c) return;
+    const norm = normalizeCategoryName(c);
+    if (norm.toLowerCase() === 'combos' || norm.toLowerCase() === 'all') return;
+    if (!seen.has(norm.toLowerCase())) {
+      seen.add(norm.toLowerCase());
+      sanitized.push(norm);
+    }
+  });
+  safeSet(KEYS.CATEGORIES, sanitized);
 }
 
 // Global Add-ons & Extra Flavours (Extra Cheese, Extra Topping, etc.)

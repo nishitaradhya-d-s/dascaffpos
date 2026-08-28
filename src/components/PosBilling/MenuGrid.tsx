@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { MenuItem, Category, CartItem, ComboItem } from '../../types';
-import { getStoredCategories, getStoredCombos } from '../../utils/storage';
+import { getStoredCategories, getStoredCombos, normalizeCategoryName } from '../../utils/storage';
 import { Search, Plus, Minus, SlidersHorizontal, PackageOpen, Utensils, Layers, UtensilsCrossed } from 'lucide-react';
 
 interface MenuGridProps {
@@ -30,23 +30,33 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
     setCombos(getStoredCombos().filter((c) => c.isAvailable));
   }, []);
 
-  // Dynamic Categories from both stored categories list, menu items, and Combos
+  // Dynamic Categories from both stored categories list, menu items, and Combos with deduplication
   const dynamicCategories = useMemo(() => {
-    const fromItems = menuItems.map((m) => m.category).filter(Boolean);
-    const stored = getStoredCategories();
-    const merged = Array.from(new Set([...fromItems, ...stored]));
-    const withoutCombos = merged.filter((c) => c !== 'Combos');
-    return ['All', 'Combos', ...withoutCombos];
+    const fromItems = menuItems.map((m) => normalizeCategoryName(m.category)).filter(Boolean);
+    const stored = getStoredCategories().map(normalizeCategoryName);
+    const seen = new Set<string>();
+    const cleaned: string[] = [];
+    [...fromItems, ...stored].forEach((c) => {
+      if (!c) return;
+      const lower = c.toLowerCase();
+      if (lower === 'combos' || lower === 'all') return;
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        cleaned.push(c);
+      }
+    });
+    return ['All', 'Combos', ...cleaned];
   }, [menuItems]);
 
   // Count items per category
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { 
-      All: menuItems.length + combos.length,
+      All: menuItems.length,
       Combos: combos.length,
     };
     menuItems.forEach((m) => {
-      counts[m.category] = (counts[m.category] || 0) + 1;
+      const norm = normalizeCategoryName(m.category);
+      counts[norm] = (counts[norm] || 0) + 1;
     });
     return counts;
   }, [menuItems, combos]);
@@ -59,7 +69,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
       if (!item.isAvailable) return false;
 
       // Category filter
-      if (selectedCategory !== 'All' && item.category !== selectedCategory) {
+      if (selectedCategory !== 'All' && normalizeCategoryName(item.category) !== selectedCategory) {
         return false;
       }
 
@@ -73,7 +83,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchName = item.name.toLowerCase().includes(q);
-        const matchCat = item.category.toLowerCase().includes(q);
+        const matchCat = (item.category || '').toLowerCase().includes(q);
         const matchDesc = item.description?.toLowerCase().includes(q);
         if (!matchName && !matchCat && !matchDesc) return false;
       }
@@ -82,9 +92,10 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
     });
   }, [menuItems, selectedCategory, typeFilter, searchQuery]);
 
-  // Filter Combos
+  // Filter Combos - only shown when "Combos" category is selected OR when user actively searches
   const filteredCombos = useMemo(() => {
-    if (selectedCategory !== 'All' && selectedCategory !== 'Combos') return [];
+    const isSearchActive = searchQuery.trim().length > 0;
+    if (selectedCategory !== 'Combos' && !isSearchActive) return [];
 
     return combos.filter((combo) => {
       if (!combo.isAvailable) return false;
