@@ -16,7 +16,7 @@ import {
   Check, 
   X, 
   RotateCcw, 
-  Sparkles, 
+  PackageOpen, 
   Save, 
   Layers,
   UtensilsCrossed,
@@ -127,15 +127,17 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
   };
 
   const handleAddSlot = (slotType: 'category' | 'custom_items') => {
+    const defaultCat = categories[0] || 'Menu';
     const newSlot: ComboSlot = {
       id: `slot-${Date.now()}`,
-      title: slotType === 'category' ? `Select from ${categories[0] || 'Menu'}` : 'Select 1 Drink / Unlisted Item',
+      title: slotType === 'category' ? `Choose from ${defaultCat}` : 'Select 1 Drink / Unlisted Item',
       type: slotType,
-      category: slotType === 'category' ? (categories[0] || 'Burger') : undefined,
+      category: slotType === 'category' ? defaultCat : undefined,
       requiredCount: 1,
       customOptions: slotType === 'custom_items' ? [
         { id: `c-${Date.now()}-1`, name: 'Coca Cola (300ml)', type: 'beverage', isCustomUnlisted: true },
         { id: `c-${Date.now()}-2`, name: 'Pepsi (300ml)', type: 'beverage', isCustomUnlisted: true },
+        { id: `c-${Date.now()}-3`, name: 'Sprite (300ml)', type: 'beverage', isCustomUnlisted: true },
       ] : undefined,
     };
     setSlots([...slots, newSlot]);
@@ -154,7 +156,15 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
   };
 
   const handleUpdateSlotCategory = (slotId: string, category: string) => {
-    setSlots(slots.map((s) => (s.id === slotId ? { ...s, category } : s)));
+    setSlots(slots.map((s) => {
+      if (s.id !== slotId) return s;
+      // Auto sync title so it never retains outdated category names like Pizza when French Fries is chosen
+      return {
+        ...s,
+        category,
+        title: `Choose 1 ${category}`,
+      };
+    }));
   };
 
   const handleAddCustomOption = (slotId: string) => {
@@ -254,7 +264,7 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
       <div className="p-4 bg-white border-b border-[#E0D7D0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#4B3621] text-amber-200 flex items-center justify-center font-bold shadow-xs">
-            <Sparkles className="w-5 h-5 text-amber-200" />
+            <PackageOpen className="w-5 h-5 text-amber-200" />
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-bold text-[#4B3621] uppercase tracking-wider font-cinzel">
@@ -455,19 +465,32 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
                         {/* Slot Type: Category Selection */}
                         {slot.type === 'category' && (
                           <div className="bg-white p-3 rounded-lg border border-[#E0D7D0] space-y-2">
-                            <div className="flex items-center gap-2">
-                              <label className="text-[11px] font-bold text-[#4B3621]">Select Menu Category:</label>
-                              <select
-                                value={slot.category || categories[0]}
-                                onChange={(e) => handleUpdateSlotCategory(slot.id, e.target.value)}
-                                className="bg-[#F9F7F5] border border-[#E0D7D0] rounded-lg px-2.5 py-1 text-xs font-bold text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
-                              >
-                                {categories.map((c) => (
-                                  <option key={c} value={c}>
-                                    {c}
-                                  </option>
-                                ))}
-                              </select>
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-2">
+                                <label className="text-[11px] font-bold text-[#4B3621]">Select Menu Category:</label>
+                                <select
+                                  value={slot.category || categories[0]}
+                                  onChange={(e) => handleUpdateSlotCategory(slot.id, e.target.value)}
+                                  className="bg-[#F9F7F5] border border-[#E0D7D0] rounded-lg px-2.5 py-1 text-xs font-bold text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
+                                >
+                                  {categories.map((c) => (
+                                    <option key={c} value={c}>
+                                      {c}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              {slot.category && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateSlotTitle(slot.id, `Choose 1 ${slot.category}`)}
+                                  className="text-[10px] font-bold text-[#4B3621] hover:text-[#2D241E] bg-[#F4F1EE] hover:bg-[#E0D7D0] border border-[#E0D7D0] px-2 py-0.5 rounded-md cursor-pointer transition-colors"
+                                  title="Reset slot title to match selected category"
+                                >
+                                  🔄 Set title to "Choose 1 {slot.category}"
+                                </button>
+                              )}
                             </div>
 
                             {/* Preview of Category Items */}
@@ -495,7 +518,7 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
                           <div className="bg-white p-3 rounded-lg border border-amber-200 space-y-2.5">
                             <div className="flex items-center justify-between">
                               <label className="text-[11px] font-bold text-amber-900 flex items-center gap-1">
-                                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                                <Coffee className="w-3.5 h-3.5 text-amber-600" />
                                 <span>Unlisted Custom Options (e.g. Coke, Pepsi, Water, Dips):</span>
                               </label>
                             </div>
@@ -592,7 +615,7 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
 
             {combos.length === 0 ? (
               <div className="p-8 text-center text-[#8B7E74]">
-                <Sparkles className="w-8 h-8 mx-auto mb-2 text-[#E0D7D0]" />
+                <UtensilsCrossed className="w-8 h-8 mx-auto mb-2 text-[#E0D7D0]" />
                 <p className="text-xs font-bold text-[#4B3621]">No combo meals created</p>
                 <p className="text-[11px] mt-1">Click "Create New Combo" or "Reset Defaults" above</p>
               </div>

@@ -16,7 +16,7 @@ import {
   Check, 
   X, 
   RotateCcw, 
-  Sparkles, 
+  PlusCircle, 
   Save, 
   DollarSign,
   Layers,
@@ -196,7 +196,7 @@ export const AddonManagerSection: React.FC = () => {
           <form onSubmit={handleCreateNew} className="max-w-4xl mx-auto bg-white p-4 rounded-xl border border-amber-200 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#4B3621] flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <PlusCircle className="w-3.5 h-3.5 text-amber-600" />
                 <span>Create New Add-on / Customization</span>
               </h3>
               <button
@@ -274,7 +274,7 @@ export const AddonManagerSection: React.FC = () => {
         <div className="max-w-5xl mx-auto space-y-4">
           {/* Quick Notice */}
           <div className="bg-white p-3 rounded-xl border border-[#E0D7D0] shadow-2xs flex items-start gap-2.5 text-xs text-[#8B7E74]">
-            <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <Layers className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold text-[#4B3621]">Direct POS Integration:</p>
               <p>

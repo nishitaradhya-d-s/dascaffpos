@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { MenuItem, Category, CartItem, ComboItem } from '../../types';
 import { getStoredCategories, getStoredCombos } from '../../utils/storage';
-import { Search, Plus, Minus, SlidersHorizontal, Sparkles, Utensils, Layers } from 'lucide-react';
+import { Search, Plus, Minus, SlidersHorizontal, PackageOpen, Utensils, Layers, UtensilsCrossed } from 'lucide-react';
 
 interface MenuGridProps {
   menuItems: MenuItem[];
@@ -205,7 +205,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
                     : isComboTab ? 'bg-amber-50 border border-amber-300 text-amber-900 hover:bg-amber-100' : 'bg-white border border-[#E0D7D0] text-[#2D241E] hover:bg-[#FDFCFB]'
                 }`}
               >
-                {isComboTab && <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
+                {isComboTab && <PackageOpen className="w-3.5 h-3.5 text-amber-300" />}
                 <span>{cat === 'All' ? 'ALL ITEMS' : cat.toUpperCase()}</span>
                 <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                   isSelected ? 'bg-white/20 text-white' : 'bg-[#F4F1EE] text-[#8B7E74]'
@@ -237,7 +237,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
         {filteredCombos.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-600" />
+              <PackageOpen className="w-4 h-4 text-amber-700" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#4B3621]">
                 Special Meal Combos &amp; Deals ({filteredCombos.length})
               </h3>
@@ -273,17 +273,25 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
 
                     {/* Slots summary */}
                     <div className="space-y-1 mb-2.5">
-                      {combo.slots.map((s, idx) => (
-                        <div
-                          key={s.id}
-                          className="bg-amber-50/70 border border-amber-200/80 rounded-md px-2 py-1 text-[10px] text-amber-950 flex items-center justify-between"
-                        >
-                          <span className="font-bold">Slot {idx + 1}: {s.title}</span>
-                          <span className="text-[9px] text-amber-800">
-                            {s.type === 'category' ? `[${s.category}]` : `[${s.customOptions?.length || 0} unlisted]`}
-                          </span>
-                        </div>
-                      ))}
+                      {combo.slots.map((s, idx) => {
+                        const displaySlotTitle = s.type === 'category' && s.category
+                          ? (s.title && s.title.toLowerCase().includes(s.category.toLowerCase()) ? s.title : `Choose ${s.category}`)
+                          : s.title;
+
+                        return (
+                          <div
+                            key={s.id}
+                            className="bg-amber-50/70 border border-amber-200/80 rounded-md px-2 py-1 text-[10px] text-amber-950 flex items-center justify-between"
+                          >
+                            <span className="font-bold truncate max-w-[170px]">
+                              Slot {idx + 1}: {displaySlotTitle}
+                            </span>
+                            <span className="text-[9px] text-amber-800 shrink-0 font-medium ml-1">
+                              {s.type === 'category' ? `[${s.category}]` : `[${s.customOptions?.length || 0} unlisted]`}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -300,7 +308,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
                       onClick={() => onSelectCombo && onSelectCombo(combo)}
                       className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <UtensilsCrossed className="w-3.5 h-3.5" />
                       <span>Select Items</span>
                     </button>
                   </div>
@@ -324,7 +332,7 @@ export const MenuGrid: React.FC<MenuGridProps> = ({
 
             {filteredItems.length === 0 && filteredCombos.length === 0 ? (
               <div className="h-64 flex flex-col items-center justify-center text-center p-6 text-[#8B7E74]">
-                <Sparkles className="w-8 h-8 text-[#8B7E74]/60 mb-2" />
+                <Utensils className="w-8 h-8 text-[#8B7E74]/60 mb-2" />
                 <p className="text-sm font-bold text-[#2D241E]">No menu items found</p>
                 <p className="text-xs text-[#8B7E74] mt-1">Try changing category or clearing the search query.</p>
               </div>

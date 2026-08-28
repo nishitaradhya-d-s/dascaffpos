@@ -30,7 +30,6 @@ import {
   PlusCircle,
   Tag,
   Settings as SettingsIcon,
-  Sparkles,
   X,
   AlertCircle
 } from 'lucide-react';

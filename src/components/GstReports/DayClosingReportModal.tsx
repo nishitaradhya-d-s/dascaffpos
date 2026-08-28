@@ -12,8 +12,7 @@ import {
   Receipt, 
   CreditCard, 
   Utensils, 
-  Clock, 
-  Sparkles 
+  Clock 
 } from 'lucide-react';
 
 interface DayClosingReportModalProps {

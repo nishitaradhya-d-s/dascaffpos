@@ -19,7 +19,6 @@ import {
   ToggleLeft,
   ToggleRight,
   Search,
-  Sparkles,
   ShoppingBag,
   Info
 } from 'lucide-react';

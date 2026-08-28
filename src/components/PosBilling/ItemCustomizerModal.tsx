@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MenuItem, Variant, Addon, CartItem } from '../../types';
 import { getStoredAddons } from '../../utils/storage';
-import { X, Check, Plus, Minus, Sparkles, Layers } from 'lucide-react';
+import { X, Check, Plus, Minus, Layers } from 'lucide-react';
 
 interface ItemCustomizerModalProps {
   item: MenuItem | null;

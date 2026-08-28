@@ -14,7 +14,7 @@ import {
   RotateCcw, 
   UtensilsCrossed, 
   SlidersHorizontal,
-  Sparkles,
+  PackageOpen,
   Save,
   FolderPlus,
   LayoutGrid,
@@ -260,7 +260,7 @@ export const MenuManager: React.FC<MenuManagerProps> = ({
               : 'text-amber-100/70 hover:text-white hover:bg-white/5'
           }`}
         >
-          <Sparkles className="w-4 h-4 text-amber-300" />
+          <PackageOpen className="w-4 h-4 text-amber-300" />
           <span>Combos &amp; Meal Deals</span>
           <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
             activeSubTab === 'combos' ? 'bg-[#4B3621] text-amber-200' : 'bg-white/10 text-white'

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ComboItem, ComboSlot, MenuItem, CartItem } from '../../types';
-import { X, Check, Plus, Minus, Sparkles, UtensilsCrossed } from 'lucide-react';
+import { X, Check, Plus, Minus, PackageOpen, UtensilsCrossed } from 'lucide-react';
 
 interface ComboSelectorModalProps {
   combo: ComboItem | null;
@@ -102,7 +102,7 @@ export const ComboSelectorModal: React.FC<ComboSelectorModalProps> = ({
         <div className="p-4 bg-[#4B3621] text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center font-bold">
-              <Sparkles className="w-4 h-4" />
+              <PackageOpen className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -127,21 +127,62 @@ export const ComboSelectorModal: React.FC<ComboSelectorModalProps> = ({
           </button>
         </div>
 
+        {/* Live Active Selection Banner */}
+        <div className="bg-amber-50 border-b border-amber-200/80 px-4 py-2 flex items-center justify-between text-xs text-amber-950 font-medium shrink-0">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <span className="font-bold text-[#4B3621] shrink-0">Your Meal Combo:</span>
+            <span className="truncate text-[#2D241E] font-semibold">
+              {Object.values(selections).map((s: { name: string }) => s.name).filter(Boolean).join(' + ') || 'Select items below'}
+            </span>
+          </div>
+          <div className="text-xs font-bold font-mono text-[#4B3621] shrink-0 ml-2">
+            ₹{totalPrice.toFixed(0)}
+          </div>
+        </div>
+
         {/* Content Body: Slots & Selectors */}
         <div className="p-5 space-y-5 overflow-y-auto flex-1">
           {combo.slots.map((slot, index) => {
             const currentSelection = selections[slot.id]?.name;
 
+            // Generate clean label that reflects current category
+            const slotDisplayTitle = slot.type === 'category' && slot.category
+              ? (slot.title && slot.title.toLowerCase().includes(slot.category.toLowerCase()) ? slot.title : `Choose from ${slot.category}`)
+              : slot.title;
+
             return (
-              <div key={slot.id} className="space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#4B3621] text-white text-[10px] font-bold flex items-center justify-center">
-                    {index + 1}
-                  </span>
-                  <label className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">
-                    {slot.title}
-                  </label>
+              <div key={slot.id} className="space-y-2.5 bg-[#FAF8F6] p-3.5 rounded-xl border border-[#E0D7D0]">
+                <div className="flex items-center justify-between flex-wrap gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#4B3621] text-amber-200 text-[10px] font-bold flex items-center justify-center">
+                      {index + 1}
+                    </span>
+                    <label className="text-xs font-bold text-[#2D241E] uppercase tracking-wider">
+                      {slotDisplayTitle}
+                    </label>
+                  </div>
+
+                  {slot.type === 'category' && slot.category && (
+                    <span className="text-[10px] font-bold text-[#4B3621] bg-white border border-[#E0D7D0] px-2 py-0.5 rounded-full">
+                      Category: {slot.category}
+                    </span>
+                  )}
                 </div>
+
+                {/* Real-time chosen indicator for this slot */}
+                {currentSelection && (
+                  <div className="text-[11px] text-[#4B3621] font-semibold flex items-center justify-between bg-white border border-amber-200 px-2.5 py-1 rounded-lg shadow-2xs">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-emerald-700 font-bold">✓ Selected:</span>
+                      <strong className="text-[#2D241E]">{currentSelection}</strong>
+                    </div>
+                    {selections[slot.id]?.priceDelta ? (
+                      <span className="text-[10px] font-mono font-bold text-emerald-700">
+                        +₹{selections[slot.id]?.priceDelta}
+                      </span>
+                    ) : null}
+                  </div>
+                )}
 
                 {/* Option Choice 1: From Category in Menu */}
                 {slot.type === 'category' && slot.category && (

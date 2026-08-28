@@ -20,7 +20,6 @@ import {
   Moon, 
   Clock, 
   Send, 
-  Sparkles, 
   Share2, 
   DollarSign, 
   SunMedium 
