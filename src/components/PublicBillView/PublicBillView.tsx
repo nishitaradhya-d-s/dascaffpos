@@ -66,104 +66,109 @@ export const PublicBillView: React.FC<PublicBillViewProps> = ({
       </div>
 
       {/* Official Bill Card Matching Paper Invoice */}
-      <div className="w-full max-w-md bg-white text-[#2D241E] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E0D7D0] animate-in fade-in zoom-in duration-200">
+      <div className="w-full max-w-sm bg-white text-black rounded-lg p-5 sm:p-6 shadow-xl border border-[#E0D7D0] font-mono animate-in fade-in zoom-in duration-200">
         {/* Cafe Header */}
-        <div className="text-center space-y-1">
-          <div className="w-12 h-12 rounded-xl bg-[#4B3621] text-amber-200 flex items-center justify-center font-bold text-lg mx-auto shadow-xs font-cinzel">
-            DC
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#2D241E] tracking-wider uppercase font-cinzel">
+        <div className="text-center space-y-0.5">
+          <h1 className="text-lg font-bold uppercase tracking-wider">
             {settings.cafeName}
           </h1>
-          <div className="text-xs font-bold uppercase text-[#2D241E] tracking-widest">
+          <div className="text-xs font-bold uppercase tracking-wide">
             TAX INVOICE
           </div>
-          <div className="text-[11px] font-semibold text-[#8B7E74] uppercase tracking-wider">
+          <div className="text-[11px] uppercase">
             ORIGINAL
           </div>
 
-          <div className="text-xs text-[#8B7E74] pt-1 leading-relaxed">
+          <div className="text-[11.5px] pt-1 leading-snug">
             {settings.address}<br />
             {settings.cityStateZip}<br />
-            <span className="font-semibold text-[#2D241E]">Caff Phone No :</span> <span className="font-mono">{settings.phone}</span>
+            <span>Caff Phone No : {settings.phone}</span>
           </div>
 
-          <div className="pt-2">
-            <div className="text-sm font-bold text-[#2D241E] font-mono">
+          <div className="pt-1.5 space-y-0.5">
+            <div className="text-xs font-bold">
               Invoice No : {bill.billNumber}
             </div>
-            <div className="text-xs font-bold text-[#4B3621] uppercase tracking-wider">
+            <div className="text-xs font-bold uppercase">
               {bill.orderType}
             </div>
-            <div className="text-[11px] text-[#8B7E74] font-medium">
+            <div className="text-[11px]">
               {fullFormatted}
             </div>
           </div>
         </div>
 
         {/* Dashed Separator */}
-        <div className="border-t border-dashed border-[#E0D7D0] my-4" />
+        <div className="border-t border-dashed border-black my-3" />
 
         {/* Customer & Check Metadata */}
-        <div className="space-y-1 text-xs text-[#2D241E] font-medium">
+        <div className="space-y-0.5 text-xs">
           <div className="flex justify-between">
-            <span>CHECK NO : <strong className="font-mono text-[#2D241E]">{checkNo}</strong></span>
-            <span>Table No: <strong className="font-mono text-[#2D241E]">{tableDisplay}</strong></span>
+            <span>CHECK NO : {checkNo}</span>
+            <span>Table No: {tableDisplay}</span>
           </div>
           <div className="flex justify-between">
             <span>Customer Name:</span>
-            <strong className="text-[#2D241E]">{bill.customerName || 'Walk-in'}</strong>
+            <span>{bill.customerName || 'Walk-in'}</span>
           </div>
-          <div className="flex justify-between">
-            <span>Customer Mobile No :</span>
-            <span className="font-mono text-[#2D241E]">{bill.customerPhone || '******46252'}</span>
-          </div>
+          {bill.customerPhone && (
+            <div className="flex justify-between">
+              <span>Customer Mobile No :</span>
+              <span>{bill.customerPhone}</span>
+            </div>
+          )}
         </div>
 
-        <div className="border-t border-dashed border-[#E0D7D0] my-4" />
+        <div className="border-t border-dashed border-black my-3" />
 
         {/* Items Table Header */}
-        <div className="flex justify-between text-xs font-bold text-[#2D241E] uppercase mb-2">
+        <div className="flex justify-between text-xs font-bold uppercase mb-1.5">
           <span>QTY &nbsp; PRODUCT</span>
           <span>AMOUNT</span>
         </div>
 
         {/* Items List */}
-        <div className="space-y-2 text-xs">
+        <div className="space-y-1 text-xs">
           {bill.items.map((item, idx) => (
             <div key={idx} className="space-y-0.5">
               <div className="flex justify-between items-baseline">
-                <span className="font-medium text-[#2D241E]">
-                  <span className="font-mono">{item.quantity} EA</span> &nbsp;
-                  <span className="font-bold">{item.name}</span>
+                <span>
+                  <span>{item.quantity} EA</span> &nbsp;
+                  <span>{item.name}</span>
                 </span>
-                <span className="font-mono font-bold text-[#2D241E]">
+                <span className="font-bold">
                   {item.totalPrice.toFixed(2)}
                 </span>
               </div>
 
               {item.selectedVariant && (
-                <div className="text-[11px] text-[#8B7E74] pl-8 font-medium">
-                  - {item.selectedVariant.name}
+                <div className="text-[11px] pl-6">
+                  • {item.selectedVariant.name}
                 </div>
               )}
 
               {item.addons && item.addons.length > 0 && (
-                <div className="text-[11px] text-[#8B7E74] pl-8 font-medium">
-                  {item.addons.map((a) => `+ ${a.name}`).join(', ')}
+                <div className="text-[11px] pl-6">
+                  {item.addons.map((a) => `• ${a.name}`).join(' ')}
+                </div>
+              )}
+
+              {item.comboSelections && item.comboSelections.length > 0 && (
+                <div className="text-[11px] pl-6">
+                  {item.comboSelections.map((cs) => `• ${cs.selectedName}`).join(' ')}
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        <div className="border-t border-dashed border-[#E0D7D0] my-4" />
+        <div className="border-t border-dashed border-black my-3" />
 
         {/* Subtotal & Taxes */}
-        <div className="space-y-1.5 text-xs text-[#2D241E]">
+        <div className="space-y-1 text-xs">
           <div className="flex justify-between">
             <span>Sub Total</span>
-            <span className="font-mono font-bold text-[#2D241E]">
+            <span className="font-bold">
               {bill.taxDetails.subTotal.toFixed(2)}
             </span>
           </div>
@@ -172,13 +177,13 @@ export const PublicBillView: React.FC<PublicBillViewProps> = ({
             <>
               <div className="flex justify-between">
                 <span>CGST {bill.taxDetails.cgstRate}%</span>
-                <span className="font-mono text-[#2D241E]">
+                <span>
                   {bill.taxDetails.cgstAmount.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>SGST {bill.taxDetails.sgstRate}%</span>
-                <span className="font-mono text-[#2D241E]">
+                <span>
                   {bill.taxDetails.sgstAmount.toFixed(2)}
                 </span>
               </div>
@@ -186,51 +191,49 @@ export const PublicBillView: React.FC<PublicBillViewProps> = ({
           )}
 
           {bill.taxDetails.discountAmount > 0 && (
-            <div className="flex justify-between text-emerald-700 font-semibold">
+            <div className="flex justify-between">
               <span>Discount ({bill.taxDetails.discountPercent.toFixed(1)}%)</span>
-              <span className="font-mono">
+              <span>
                 -{bill.taxDetails.discountAmount.toFixed(2)}
               </span>
             </div>
           )}
         </div>
 
-        <div className="border-t border-dashed border-[#E0D7D0] my-4" />
+        <div className="border-t border-dashed border-black my-3" />
 
         {/* Total Payable */}
-        <div className="flex justify-between items-baseline text-base font-bold text-[#2D241E]">
+        <div className="flex justify-between items-baseline text-sm font-bold">
           <span>Total Payable</span>
-          <span className="text-xl font-mono font-bold text-[#4B3621]">
-            ₹{bill.taxDetails.grandTotal.toFixed(2)}
+          <span className="text-base font-bold">
+            {bill.taxDetails.grandTotal.toFixed(2)}
           </span>
         </div>
 
-        <div className="border-t border-dashed border-[#E0D7D0] my-4" />
+        <div className="border-t border-dashed border-black my-3" />
 
         {/* Payment Details */}
-        <div className="text-xs space-y-1">
-          <div className="font-bold text-[#2D241E]">Payment Details:</div>
-          <div className="flex justify-between text-[#8B7E74]">
-            <span>{bill.paymentMode}</span>
-            <span className="font-mono font-bold text-[#2D241E]">
-              {bill.taxDetails.grandTotal.toFixed(2)}
-            </span>
+        <div className="text-xs space-y-0.5">
+          <div className="font-bold">Payment Details:</div>
+          <div className="flex justify-between">
+            <span>Mode:</span>
+            <span className="font-bold">{bill.paymentMode}</span>
           </div>
         </div>
 
-        <div className="border-t border-dashed border-[#E0D7D0] my-4" />
+        <div className="border-t border-dashed border-black my-3" />
 
         {/* Tax Info */}
-        <div className="text-[11px] text-[#8B7E74] space-y-0.5 font-mono">
+        <div className="text-[11px] space-y-0.5">
           {settings.sac && <div>SAC : {settings.sac}</div>}
           {settings.gstin && <div>GST NO : {settings.gstin}</div>}
           {settings.cin && <div>CIN : {settings.cin}</div>}
           {settings.fssaiNumber && <div>FSSAI : {settings.fssaiNumber}</div>}
         </div>
 
-        <div className="border-t border-dashed border-[#E0D7D0] my-4" />
+        <div className="border-t border-dashed border-black my-3" />
 
-        <div className="text-center text-xs font-bold text-[#2D241E] tracking-wider">
+        <div className="text-center text-xs font-bold tracking-wider">
           {settings.termsAndConditions || '*** HAVE A DELICIOUS DAY ***'}
         </div>
       </div>

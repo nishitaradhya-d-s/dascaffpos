@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "Bill": {
+      "title": "Bill",
+      "description": "Completed customer orders and invoices",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "invoiceNumber": { "type": "string" },
+        "date": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "orderType": { "type": "string" },
+        "tableNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "tax": { "type": "number" },
+        "discount": { "type": "number" },
+        "total": { "type": "number" },
+        "paymentMode": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "invoiceNumber", "total"]
+    },
+    "ActiveOrder": {
+      "title": "ActiveOrder",
+      "description": "Current active table and takeaway orders",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "status": { "type": "string" },
+        "items": { "type": "array" }
+      },
+      "required": ["id", "orderNumber"]
+    },
+    "MenuItem": {
+      "title": "MenuItem",
+      "description": "Custom restaurant menu items",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "type": { "type": "string" }
+      },
+      "required": ["id", "name", "price", "category"]
+    },
+    "ComboItem": {
+      "title": "ComboItem",
+      "description": "Custom combos and meal deals",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "slots": { "type": "array" }
+      },
+      "required": ["id", "name", "price"]
+    },
+    "RestaurantSettings": {
+      "title": "RestaurantSettings",
+      "description": "Restaurant configuration and printer settings",
+      "type": "object",
+      "properties": {
+        "restaurantName": { "type": "string" },
+        "gstNumber": { "type": "string" },
+        "upiId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "collections": {
+      "bills": {
+        "entity": "Bill",
+        "description": "All past and current generated bills"
+      },
+      "activeOrders": {
+        "entity": "ActiveOrder",
+        "description": "Active tables and open KOTs"
+      },
+      "menuItems": {
+        "entity": "MenuItem",
+        "description": "Custom and saved menu items"
+      },
+      "combos": {
+        "entity": "ComboItem",
+        "description": "Custom and saved combos"
+      },
+      "restaurantSettings": {
+        "entity": "RestaurantSettings",
+        "description": "Global restaurant settings"
+      }
+    }
+  }
+}

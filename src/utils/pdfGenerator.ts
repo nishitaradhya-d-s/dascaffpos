@@ -23,37 +23,37 @@ export function generateInvoicePdfDoc(bill: BillRecord, settings: CafeSettings):
   let y = 8;
 
   // Header Title
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(13);
   doc.text(settings.cafeName, pageWidth / 2, y, { align: 'center' });
-  y += 5;
+  y += 4.5;
 
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.text('TAX INVOICE', pageWidth / 2, y, { align: 'center' });
-  y += 4;
+  y += 3.5;
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('courier', 'normal');
   doc.setFontSize(8);
   doc.text('ORIGINAL', pageWidth / 2, y, { align: 'center' });
-  y += 4;
+  y += 3.5;
 
-  doc.setFontSize(7);
+  doc.setFontSize(7.5);
   const addressLines = doc.splitTextToSize(`${settings.address} ${settings.cityStateZip}`, 68);
   doc.text(addressLines, pageWidth / 2, y, { align: 'center' });
   y += addressLines.length * 3 + 1;
 
   doc.text(`Caff Phone No : ${settings.phone}`, pageWidth / 2, y, { align: 'center' });
-  y += 4;
+  y += 3.5;
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(8.5);
   doc.text(`Invoice No : ${bill.billNumber}`, pageWidth / 2, y, { align: 'center' });
-  y += 4;
+  y += 3.5;
 
   doc.text(bill.orderType.toUpperCase(), pageWidth / 2, y, { align: 'center' });
-  y += 4;
+  y += 3.5;
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('courier', 'normal');
   doc.setFontSize(7.5);
   doc.text(fullFormatted, pageWidth / 2, y, { align: 'center' });
   y += 3;
@@ -61,7 +61,7 @@ export function generateInvoicePdfDoc(bill: BillRecord, settings: CafeSettings):
   // Dashed Line
   doc.setLineDashPattern([1, 1], 0);
   doc.line(6, y, 74, y);
-  y += 4;
+  y += 3.5;
 
   // Meta Info
   doc.setFontSize(7.5);
@@ -78,36 +78,46 @@ export function generateInvoicePdfDoc(bill: BillRecord, settings: CafeSettings):
   }
 
   doc.line(6, y, 74, y);
-  y += 4;
+  y += 3.5;
 
   // Table header
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('courier', 'bold');
   doc.text('QTY   PRODUCT', 6, y);
   doc.text('AMOUNT', 74, y, { align: 'right' });
   y += 3.5;
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('courier', 'normal');
   // Items
   bill.items.forEach((item) => {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('courier', 'normal');
     doc.text(`${item.quantity} EA  ${item.name}`, 6, y);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('courier', 'bold');
     doc.text(item.totalPrice.toFixed(2), 74, y, { align: 'right' });
     y += 3.5;
 
     if (item.selectedVariant) {
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('courier', 'normal');
       doc.setFontSize(6.5);
-      doc.text(`       - ${item.selectedVariant.name}`, 6, y);
+      doc.text(`       • ${item.selectedVariant.name}`, 6, y);
       doc.setFontSize(7.5);
       y += 3;
     }
 
     if (item.addons && item.addons.length > 0) {
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('courier', 'normal');
       doc.setFontSize(6.5);
       item.addons.forEach((a) => {
-        doc.text(`       + ${a.name}`, 6, y);
+        doc.text(`       • ${a.name}`, 6, y);
+        y += 3;
+      });
+      doc.setFontSize(7.5);
+    }
+
+    if (item.comboSelections && item.comboSelections.length > 0) {
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(6.5);
+      item.comboSelections.forEach((cs) => {
+        doc.text(`       • ${cs.selectedName}`, 6, y);
         y += 3;
       });
       doc.setFontSize(7.5);
@@ -116,10 +126,10 @@ export function generateInvoicePdfDoc(bill: BillRecord, settings: CafeSettings):
 
   y += 1;
   doc.line(6, y, 74, y);
-  y += 4;
+  y += 3.5;
 
   // Subtotals
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('courier', 'normal');
   doc.text('Sub Total', 6, y);
   doc.text(bill.taxDetails.subTotal.toFixed(2), 74, y, { align: 'right' });
   y += 3.5;
@@ -141,11 +151,11 @@ export function generateInvoicePdfDoc(bill: BillRecord, settings: CafeSettings):
   }
 
   doc.line(6, y, 74, y);
-  y += 4;
+  y += 3.5;
 
   // Total Payable
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
+  doc.setFont('courier', 'bold');
+  doc.setFontSize(9);
   doc.text('Total Payable', 6, y);
   doc.text(bill.taxDetails.grandTotal.toFixed(2), 74, y, { align: 'right' });
   y += 4;
@@ -155,13 +165,12 @@ export function generateInvoicePdfDoc(bill: BillRecord, settings: CafeSettings):
   y += 3.5;
 
   // Payment Details
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('courier', 'bold');
   doc.setFontSize(7.5);
   doc.text('Payment Details:', 6, y);
   y += 3.5;
-  doc.setFont('helvetica', 'normal');
-  doc.text(bill.paymentMode, 6, y);
-  doc.text(bill.taxDetails.grandTotal.toFixed(2), 74, y, { align: 'right' });
+  doc.setFont('courier', 'normal');
+  doc.text(`Mode: ${bill.paymentMode}`, 6, y);
   y += 3.5;
 
   doc.line(6, y, 74, y);
@@ -175,9 +184,9 @@ export function generateInvoicePdfDoc(bill: BillRecord, settings: CafeSettings):
   if (settings.fssaiNumber) { doc.text(`FSSAI : ${settings.fssaiNumber}`, 6, y); y += 3; }
 
   doc.line(6, y, 74, y);
-  y += 4;
+  y += 3.5;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('courier', 'bold');
   doc.setFontSize(7.5);
   doc.text(settings.termsAndConditions || '*** HAVE A DELICIOUS DAY ***', pageWidth / 2, y, { align: 'center' });
 
@@ -202,12 +211,12 @@ export function generateKotPdfDoc(bill: BillRecord, settings: CafeSettings): jsP
   const pageWidth = 80;
   let y = 7;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('courier', 'bold');
   doc.setFontSize(11);
   doc.text(`KOT No: ${kotNo}`, 6, y);
   y += 4.5;
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont('courier', 'normal');
   doc.setFontSize(8);
   doc.text(`Date: ${dateStr} ${timeStr}`, 6, y);
   y += 4;
@@ -215,7 +224,7 @@ export function generateKotPdfDoc(bill: BillRecord, settings: CafeSettings): jsP
   doc.text(`Bill No: ${bill.billNumber}`, 6, y);
   y += 4;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('courier', 'bold');
   doc.text(`Table: ${tableDisplay} (${bill.orderType})`, 6, y);
   y += 3;
 
@@ -225,29 +234,38 @@ export function generateKotPdfDoc(bill: BillRecord, settings: CafeSettings): jsP
 
   // Items
   bill.items.forEach((item) => {
-    doc.setFont('helvetica', 'bold');
+    doc.setFont('courier', 'bold');
     doc.setFontSize(9);
     doc.text(`${item.name} (${item.quantity})`, 6, y);
     y += 3.5;
 
     if (item.selectedVariant) {
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('courier', 'normal');
       doc.setFontSize(7.5);
-      doc.text(`  - ${item.selectedVariant.name}`, 6, y);
+      doc.text(`  • ${item.selectedVariant.name}`, 6, y);
       y += 3;
     }
 
     if (item.addons && item.addons.length > 0) {
-      doc.setFont('helvetica', 'normal');
+      doc.setFont('courier', 'normal');
       doc.setFontSize(7.5);
       item.addons.forEach((a) => {
-        doc.text(`  + ${a.name}`, 6, y);
+        doc.text(`  • ${a.name}`, 6, y);
+        y += 3;
+      });
+    }
+
+    if (item.comboSelections && item.comboSelections.length > 0) {
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(7.5);
+      item.comboSelections.forEach((cs) => {
+        doc.text(`  • ${cs.selectedName}`, 6, y);
         y += 3;
       });
     }
 
     if (item.notes) {
-      doc.setFont('helvetica', 'italic');
+      doc.setFont('courier', 'italic');
       doc.setFontSize(7);
       doc.text(`  * Note: ${item.notes}`, 6, y);
       y += 3;
@@ -258,7 +276,7 @@ export function generateKotPdfDoc(bill: BillRecord, settings: CafeSettings): jsP
   doc.line(6, y, 74, y);
   y += 4;
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont('courier', 'bold');
   doc.setFontSize(8);
   doc.text('KITCHEN COPY', pageWidth / 2, y, { align: 'center' });
 

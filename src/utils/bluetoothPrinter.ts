@@ -260,11 +260,16 @@ function buildEscPosTaxInvoice(bill: BillRecord, settings: CafeSettings): Uint8A
     write(`${qtyStr}${nameStr}${priceStr}\n`);
 
     if (item.selectedVariant) {
-      write(`      - ${item.selectedVariant.name}\n`);
+      write(`      • ${item.selectedVariant.name}\n`);
     }
     if (item.addons && item.addons.length > 0) {
       item.addons.forEach((a) => {
-        write(`      + ${a.name}\n`);
+        write(`      • ${a.name}\n`);
+      });
+    }
+    if (item.comboSelections && item.comboSelections.length > 0) {
+      item.comboSelections.forEach((cs) => {
+        write(`      • ${cs.selectedName}\n`);
       });
     }
   });

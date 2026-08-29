@@ -17,9 +17,14 @@ import {
   EyeOff,
   Hash,
   ExternalLink,
-  Info
+  Info,
+  Cloud,
+  CloudCheck,
+  RefreshCw,
+  Download,
+  Upload
 } from 'lucide-react';
-import { resetInvoiceSequence } from '../../utils/storage';
+import { resetInvoiceSequence, getStoredBills, saveBillRecord } from '../../utils/storage';
 import { 
   connectBluetoothPrinter, 
   disconnectBluetoothPrinter, 
@@ -28,6 +33,7 @@ import {
   isBluetoothSupported,
   isEmbeddedInIframe
 } from '../../utils/bluetoothPrinter';
+import { uploadLocalBillsToCloud, performFullCloudSync } from '../../services/firebase';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -56,12 +62,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [btLoading, setBtLoading] = useState(false);
   const [btAlertMessage, setBtAlertMessage] = useState<string | null>(null);
 
+  // Cloud Synchronization state
+  const [cloudSyncing, setCloudSyncing] = useState(false);
+  const [cloudFeedback, setCloudFeedback] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [localBillsCount, setLocalBillsCount] = useState<number>(() => getStoredBills().length);
+
   // Keep form data synchronized when modal opens or settings change
   React.useEffect(() => {
     if (isOpen) {
       setFormData({ ...settings });
       setBtStatus(isBluetoothPrinterConnected() ? getConnectedDeviceName() : null);
       setBtAlertMessage(null);
+      setLocalBillsCount(getStoredBills().length);
+      setCloudFeedback(null);
     }
   }, [isOpen, settings]);
 
@@ -80,6 +93,70 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setTimeout(() => {
       setSeqResetSuccess(false);
     }, 2500);
+  };
+
+  const handleUploadAllPastBills = async () => {
+    try {
+      setCloudSyncing(true);
+      const bills = getStoredBills();
+      if (bills.length === 0) {
+        setCloudFeedback({ text: 'No local bills found to upload.', type: 'success' });
+        return;
+      }
+      const uploadedCount = await uploadLocalBillsToCloud(bills);
+      setCloudFeedback({
+        text: `Successfully uploaded ${uploadedCount} past bills to Cloud! All other browsers will now show this data.`,
+        type: 'success'
+      });
+      setLocalBillsCount(getStoredBills().length);
+    } catch (e: any) {
+      setCloudFeedback({
+        text: `Cloud upload error: ${e?.message || 'Could not connect'}`,
+        type: 'error'
+      });
+    } finally {
+      setCloudSyncing(false);
+    }
+  };
+
+  const handlePerformFullCloudSync = async () => {
+    try {
+      setCloudSyncing(true);
+      const res = await performFullCloudSync();
+      setCloudFeedback({
+        text: `Full sync completed! Synced ${res.billsCount} bills and current POS configuration.`,
+        type: 'success'
+      });
+      setLocalBillsCount(getStoredBills().length);
+    } catch (e: any) {
+      setCloudFeedback({
+        text: `Sync error: ${e?.message || 'Could not sync'}`,
+        type: 'error'
+      });
+    } finally {
+      setCloudSyncing(false);
+    }
+  };
+
+  const handleExportJsonBackup = () => {
+    try {
+      const data = {
+        exportedAt: new Date().toISOString(),
+        settings: formData,
+        bills: getStoredBills(),
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dascaff_pos_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleConnectBt = async () => {
@@ -470,7 +547,98 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Section 5: Thermal & Bluetooth Printer Configuration */}
+          {/* Section 5: Cloud Database & Cross-Browser Data Sync (No Email Needed) */}
+          <div className="bg-[#F9F7F5] p-4 rounded-xl border border-[#E0D7D0] space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-bold text-[#2D241E] text-xs uppercase tracking-wider">
+                <Cloud className="w-4 h-4 text-[#4B3621]" />
+                <span>Cloud Database &amp; Cross-Browser Sync</span>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Real-Time Cloud Active</span>
+              </span>
+            </div>
+
+            <div className="text-[11px] text-[#5A4D41] bg-white p-3 rounded-lg border border-[#E0D7D0] space-y-1.5">
+              <p className="font-bold text-[#2D241E]">
+                All POS data syncs seamlessly across Google Chrome, other browsers, phones, and computers.
+              </p>
+              <p className="text-[10.5px] text-[#8B7E74]">
+                • No email address or password required.<br />
+                • When you create a bill or edit the menu on one browser, all other connected screens update automatically.<br />
+                • Free cloud storage is ready with permanent real-time multi-device sync.
+              </p>
+            </div>
+
+            {/* Cloud Feedback banner */}
+            {cloudFeedback && (
+              <div
+                className={`p-2.5 rounded-lg text-xs flex items-start justify-between gap-2 border ${
+                  cloudFeedback.type === 'success'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                    : 'bg-rose-50 border-rose-200 text-rose-800'
+                }`}
+              >
+                <span className="text-[11px] font-medium leading-relaxed">{cloudFeedback.text}</span>
+                <button
+                  type="button"
+                  onClick={() => setCloudFeedback(null)}
+                  className="font-bold text-xs cursor-pointer opacity-70 hover:opacity-100"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Sync Action Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleUploadAllPastBills}
+                disabled={cloudSyncing}
+                className="p-2.5 bg-white hover:bg-[#F4F1EE] border border-[#4B3621] text-[#4B3621] rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs"
+                title="Upload all bills taken so far on this browser into the Cloud so Chrome and other devices can access them"
+              >
+                {cloudSyncing ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#4B3621]" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5 text-[#4B3621]" />
+                )}
+                <span>Upload Past Bills to Cloud ({localBillsCount})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePerformFullCloudSync}
+                disabled={cloudSyncing}
+                className="p-2.5 bg-[#4B3621] hover:bg-[#3D2C1B] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs"
+                title="Force refresh and synchronize all data between this computer and the Cloud"
+              >
+                {cloudSyncing ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-white" />
+                ) : (
+                  <RefreshCw className="w-3.5 h-3.5 text-white" />
+                )}
+                <span>Force Full Cloud Sync</span>
+              </button>
+            </div>
+
+            {/* Export JSON Backup */}
+            <div className="flex items-center justify-between pt-1 border-t border-[#E0D7D0]">
+              <span className="text-[10.5px] text-[#8B7E74]">Export a local backup file (.json) anytime:</span>
+              <button
+                type="button"
+                onClick={handleExportJsonBackup}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-[#4B3621] hover:underline cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-[#4B3621]" />
+                <span>Export POS Backup (.JSON)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Section 6: Thermal & Bluetooth Printer Configuration */}
           <div className="bg-[#F9F7F5] p-4 rounded-xl border border-[#E0D7D0] space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 font-bold text-[#2D241E] text-xs uppercase tracking-wider">

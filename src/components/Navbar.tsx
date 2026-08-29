@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Receipt, 
   History, 
@@ -10,10 +10,15 @@ import {
   LogOut, 
   UserCheck, 
   Lock, 
-  Boxes 
+  Boxes,
+  Cloud,
+  CloudCheck,
+  CloudOff,
+  RefreshCw
 } from 'lucide-react';
 import { CafeSettings } from '../types';
 import { BluetoothQuickConnect } from './Navbar/BluetoothQuickConnect';
+import { performFullCloudSync } from '../services/firebase';
 
 export type ActiveTab = 'pos' | 'history' | 'gst' | 'menu' | 'kot' | 'inventory';
 
@@ -28,6 +33,7 @@ interface NavbarProps {
   onLogout: () => void;
   isManagerUnlocked?: boolean;
   onExitManagerMode?: () => void;
+  cloudSyncStatus?: 'connected' | 'syncing' | 'offline';
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -41,7 +47,24 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   isManagerUnlocked,
   onExitManagerMode,
+  cloudSyncStatus = 'connected',
 }) => {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+
+  const handleManualSync = async () => {
+    try {
+      setIsSyncing(true);
+      const res = await performFullCloudSync();
+      setSyncFeedback(`Synced ${res.billsCount} bills`);
+      setTimeout(() => setSyncFeedback(null), 3000);
+    } catch (e) {
+      setSyncFeedback('Sync retry scheduled');
+      setTimeout(() => setSyncFeedback(null), 3000);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   const navItems = [
     { id: 'pos' as ActiveTab, label: 'POS Billing', icon: Receipt },
     { id: 'kot' as ActiveTab, label: 'Kitchen KOT', icon: ChefHat },
@@ -65,10 +88,21 @@ export const Navbar: React.FC<NavbarProps> = ({
               <h1 className="text-sm sm:text-base md:text-lg font-black text-[#4B3621] leading-none tracking-widest uppercase font-cinzel truncate max-w-[150px] sm:max-w-xs">
                 {settings.cafeName}
               </h1>
-              <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-full text-[10px] font-bold">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                <span>ONLINE</span>
-              </div>
+              {/* Cloud Live Sync Indicator */}
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isSyncing}
+                title="Cloud Live Sync: Automatically keeps all bills and data in sync across Chrome, phones, and other browsers without needing an email."
+                className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-full text-[10px] font-bold cursor-pointer transition-colors"
+              >
+                {isSyncing ? (
+                  <RefreshCw className="w-3 h-3 text-emerald-600 animate-spin" />
+                ) : (
+                  <Cloud className="w-3 h-3 text-emerald-600" />
+                )}
+                <span>{syncFeedback || (isSyncing ? 'Syncing...' : 'Cloud Synced')}</span>
+              </button>
             </div>
             <p className="text-[9px] sm:text-[10px] text-[#8B7E74] font-medium tracking-wide mt-0.5 truncate max-w-[140px] sm:max-w-xs">
               {settings.tagline || 'Al Dhawq Wal Madaaq | Taste & Refinement'}

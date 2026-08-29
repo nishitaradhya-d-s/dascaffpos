@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { 
   MenuItem, 
@@ -27,6 +27,16 @@ import {
   setManagerUnlocked,
   deductInventoryForBill
 } from './utils/storage';
+import { 
+  subscribeToBillsFromFirestore,
+  saveBillToFirestore,
+  deleteBillFromFirestore,
+  subscribeToMenuFromFirestore,
+  saveMenuToFirestore,
+  subscribeToSettingsFromFirestore,
+  saveSettingsToFirestore,
+  uploadLocalBillsToCloud
+} from './services/firebase';
 import { printReceipt } from './utils/printer';
 import { decodeBillFromUrlSafeString } from './utils/messaging';
 
@@ -90,6 +100,47 @@ export default function App() {
     const s = getStoredSettings();
     return seedSampleBillsIfEmpty(s);
   });
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<'connected' | 'syncing' | 'offline'>('connected');
+
+  // Real-time Cloud Synchronization (Works across Chrome, Safari, Edge, Mobile without requiring email)
+  useEffect(() => {
+    // 1. Subscribe to real-time Bills stream
+    const unsubBills = subscribeToBillsFromFirestore(
+      (cloudBills) => {
+        if (cloudBills && cloudBills.length > 0) {
+          setBills(cloudBills);
+        }
+        setCloudSyncStatus('connected');
+      },
+      () => setCloudSyncStatus('offline')
+    );
+
+    // 2. Subscribe to real-time Settings stream
+    const unsubSettings = subscribeToSettingsFromFirestore((cloudSettings) => {
+      if (cloudSettings && (cloudSettings.cafeName || (cloudSettings as any).restaurantName)) {
+        setSettings(cloudSettings);
+      }
+    });
+
+    // 3. Subscribe to real-time Menu stream
+    const unsubMenu = subscribeToMenuFromFirestore((cloudMenu) => {
+      if (cloudMenu && cloudMenu.length > 0) {
+        setMenuItems(cloudMenu);
+      }
+    });
+
+    // 4. Initial check: Ensure any bills created locally till now are migrated to Firestore
+    const localBills = getStoredBills();
+    if (localBills && localBills.length > 0) {
+      uploadLocalBillsToCloud(localBills).catch(() => {});
+    }
+
+    return () => {
+      unsubBills();
+      unsubSettings();
+      unsubMenu();
+    };
+  }, []);
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => checkIsAuthenticated());
@@ -307,9 +358,11 @@ export default function App() {
       kotNumber: kotNum,
     };
 
-    // Save to persistence and auto-deduct raw material inventory
+    // Save to local persistence and auto-deduct raw material inventory
     saveBillRecord(finalizedBill);
     deductInventoryForBill(finalizedBill);
+    // Asynchronously save to Cloud Firestore for cross-browser sync
+    saveBillToFirestore(finalizedBill).catch(() => {});
     setBills((prev) => [finalizedBill, ...prev]);
 
     // Handle Printing if specified
@@ -347,6 +400,7 @@ export default function App() {
       if (b.id === billId) {
         const up = { ...b, status: newStatus };
         saveBillRecord(up);
+        saveBillToFirestore(up).catch(() => {});
         return up;
       }
       return b;
@@ -357,6 +411,7 @@ export default function App() {
   // Delete bill handler
   const handleDeleteBill = (billId: string) => {
     deleteBillRecord(billId);
+    deleteBillFromFirestore(billId).catch(() => {});
     setBills(getStoredBills());
     if (selectedBillForDetail?.id === billId) {
       setSelectedBillForDetail(null);
@@ -366,6 +421,7 @@ export default function App() {
   // Edit / Update bill handler
   const handleUpdateBill = (updatedBill: BillRecord) => {
     saveBillRecord(updatedBill);
+    saveBillToFirestore(updatedBill).catch(() => {});
     setBills(getStoredBills());
     if (selectedBillForDetail?.id === updatedBill.id) {
       setSelectedBillForDetail(updatedBill);
@@ -375,18 +431,21 @@ export default function App() {
   // Save updated Menu
   const handleSaveMenu = (newMenu: MenuItem[]) => {
     saveMenu(newMenu);
+    saveMenuToFirestore(newMenu).catch(() => {});
     setMenuItems(newMenu);
   };
 
   // Reset menu to original
   const handleResetMenu = () => {
     const original = resetMenuToDefault();
+    saveMenuToFirestore(original).catch(() => {});
     setMenuItems(original);
   };
 
   // Save Settings
   const handleSaveSettings = (newSettings: CafeSettings) => {
     saveSettings(newSettings);
+    saveSettingsToFirestore(newSettings).catch(() => {});
     setSettings(newSettings);
   };
 

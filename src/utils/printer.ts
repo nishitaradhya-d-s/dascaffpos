@@ -38,7 +38,7 @@ export function formatBillDate(dateString: string): { dateStr: string; timeStr: 
 }
 
 /**
- * Generates HTML string for 80mm Tax Invoice Receipt
+ * Generates HTML string for 80mm Tax Invoice Receipt exactly matching the physical receipt
  */
 export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings): string {
   const { fullFormatted } = formatBillDate(bill.date);
@@ -52,11 +52,11 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
     .map((item) => {
       let itemHtml = `
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
-          <div style="flex: 1; padding-right: 8px;">
+          <div style="flex: 1; padding-right: 6px;">
             <span>${item.quantity} EA</span> &nbsp;
-            <span style="font-weight: 600;">${item.name}</span>
+            <span>${item.name}</span>
           </div>
-          <div style="font-weight: 700; text-align: right; min-width: 60px;">
+          <div style="font-weight: 700; text-align: right; min-width: 55px;">
             ${item.totalPrice.toFixed(2)}
           </div>
         </div>
@@ -64,8 +64,8 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
 
       if (item.selectedVariant) {
         itemHtml += `
-          <div style="padding-left: 36px; font-size: 11px; color: #333; margin-top: -1px;">
-            - ${item.selectedVariant.name}
+          <div style="padding-left: 32px; font-size: 11px; margin-top: -1px;">
+            • ${item.selectedVariant.name}
           </div>
         `;
       }
@@ -73,8 +73,18 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
       if (item.addons && item.addons.length > 0) {
         item.addons.forEach((addon) => {
           itemHtml += `
-            <div style="padding-left: 36px; font-size: 11px; color: #333; margin-top: -1px;">
-              + ${addon.name}
+            <div style="padding-left: 32px; font-size: 11px; margin-top: -1px;">
+              • ${addon.name}
+            </div>
+          `;
+        });
+      }
+
+      if (item.comboSelections && item.comboSelections.length > 0) {
+        item.comboSelections.forEach((cs) => {
+          itemHtml += `
+            <div style="padding-left: 32px; font-size: 11px; margin-top: -1px;">
+              • ${cs.selectedName}
             </div>
           `;
         });
@@ -82,7 +92,7 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
 
       if (item.notes) {
         itemHtml += `
-          <div style="padding-left: 36px; font-size: 10px; font-style: italic; color: #555;">
+          <div style="padding-left: 32px; font-size: 10px; font-style: italic;">
             * ${item.notes}
           </div>
         `;
@@ -100,7 +110,7 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
         <title>Receipt ${bill.billNumber}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
           @page {
             size: 80mm auto;
@@ -116,9 +126,9 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
             max-width: 76mm;
             margin: 0 auto;
             padding: 2mm 1.5mm 3mm 1.5mm;
-            font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
-            font-size: 11.5px;
-            line-height: 1.3;
+            font-family: 'JetBrains Mono', 'Courier New', Courier, monospace !important;
+            font-size: 12px;
+            line-height: 1.35;
             color: #000;
             background: #fff;
             height: auto !important;
@@ -132,14 +142,15 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
               max-width: 76mm !important;
               margin: 0 auto !important;
               padding: 1.5mm 1mm 2mm 1mm !important;
+              font-family: 'JetBrains Mono', 'Courier New', Courier, monospace !important;
               height: auto !important;
             }
           }
           .cafe-title {
-            font-family: 'Cinzel', serif;
-            font-size: 19px;
+            font-family: 'JetBrains Mono', 'Courier New', Courier, monospace !important;
+            font-size: 16px;
             font-weight: 800;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             text-align: center;
             text-transform: uppercase;
             margin-bottom: 2px;
@@ -152,11 +163,7 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
           }
           .divider {
             border-top: 1px dashed #000;
-            margin: 5px 0;
-          }
-          .double-divider {
-            border-top: 1.5px solid #000;
-            margin: 6px 0;
+            margin: 4px 0;
           }
           .row {
             display: flex;
@@ -167,45 +174,45 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
             display: flex;
             justify-content: space-between;
             font-weight: 700;
-            font-size: 11px;
-            margin-bottom: 4px;
+            font-size: 11.5px;
+            margin-bottom: 3px;
           }
           .grand-total {
-            font-size: 15px;
-            font-weight: 900;
-            padding: 3px 0;
+            font-size: 14.5px;
+            font-weight: 800;
+            padding: 2px 0;
           }
           .tax-row {
             display: flex;
             justify-content: space-between;
-            font-size: 11.5px;
-            margin: 2px 0;
+            font-size: 12px;
+            margin: 1.5px 0;
           }
           .meta-info {
-            font-size: 11px;
-            line-height: 1.3;
+            font-size: 11.5px;
+            line-height: 1.35;
           }
           .footer-text {
             text-align: center;
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: 700;
             letter-spacing: 0.5px;
-            margin-top: 6px;
+            margin-top: 5px;
           }
         </style>
       </head>
       <body>
         <!-- Header -->
         <div class="cafe-title">${settings.cafeName}</div>
-        <div class="center bold" style="font-size: 13px; letter-spacing: 0.5px;">TAX INVOICE</div>
+        <div class="center bold" style="font-size: 12.5px; letter-spacing: 0.5px;">TAX INVOICE</div>
         <div class="center" style="font-size: 11px;">ORIGINAL</div>
-        <div class="center meta-info" style="margin-top: 3px;">
+        <div class="center meta-info" style="margin-top: 2px;">
           ${settings.address}<br>
           ${settings.cityStateZip}<br>
           Caff Phone No : ${settings.phone}
         </div>
 
-        <div class="center bold" style="font-size: 14px; margin-top: 4px;">
+        <div class="center bold" style="font-size: 13px; margin-top: 3px;">
           Invoice No : ${bill.billNumber}
         </div>
         <div class="center bold" style="font-size: 12px;">
@@ -242,7 +249,7 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
         </div>
 
         <!-- Items -->
-        <div style="margin-bottom: 4px;">
+        <div style="margin-bottom: 3px;">
           ${itemsHtml}
         </div>
 
@@ -283,7 +290,7 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
         <div class="divider"></div>
 
         <!-- Payment Details -->
-        <div style="margin: 3px 0;">
+        <div style="margin: 2px 0;">
           <div class="bold" style="font-size: 11.5px;">Payment Details:</div>
           <div class="row" style="font-size: 11.5px;">
             <div>Mode:</div>
@@ -311,7 +318,7 @@ export function generateTaxInvoiceHtml(bill: BillRecord, settings: CafeSettings)
         <div class="divider"></div>
 
         <!-- Tax Registration Details -->
-        <div class="meta-info" style="line-height: 1.4;">
+        <div class="meta-info" style="line-height: 1.35;">
           ${settings.sac ? `<div>SAC : ${settings.sac}</div>` : ''}
           ${settings.gstin ? `<div>GST NO : ${settings.gstin}</div>` : ''}
           ${settings.cin ? `<div>CIN : ${settings.cin}</div>` : ''}
