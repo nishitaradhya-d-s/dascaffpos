@@ -350,6 +350,10 @@ function buildEscPosKot(bill: BillRecord): Uint8Array {
   write(`Date: ${dateStr} ${timeStr}\n`);
   write(`Bill: ${bill.billNumber}\n`);
   command(0x1B, 0x45, 1);
+  write(`Customer: ${bill.customerName || 'Walk-in'}\n`);
+  if (bill.customerPhone) {
+    write(`Phone: ${bill.customerPhone}\n`);
+  }
   write(`Table: ${bill.tableNumber || 'T-1'} (${bill.orderType})\n`);
   command(0x1B, 0x45, 0);
 

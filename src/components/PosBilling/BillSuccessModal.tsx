@@ -84,7 +84,7 @@ export const BillSuccessModal: React.FC<BillSuccessModalProps> = ({
           <h2 className="text-lg font-bold text-white tracking-wide">
             Bill Settled Successfully!
           </h2>
-          <div className="flex items-center justify-center gap-2 mt-1">
+          <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
             <span className="text-xs font-mono font-bold text-amber-200 bg-black/25 px-2.5 py-0.5 rounded-md border border-white/10">
               {bill.billNumber}
             </span>
@@ -94,6 +94,11 @@ export const BillSuccessModal: React.FC<BillSuccessModalProps> = ({
             <span className="text-xs text-white/80">
               {bill.orderType} {bill.tableNumber ? `(${bill.tableNumber})` : ''}
             </span>
+          </div>
+
+          <div className="text-xs font-bold text-amber-100 mt-1 flex items-center justify-center gap-1.5">
+            <span>Customer: {bill.customerName || 'Walk-in'}</span>
+            {bill.customerPhone && <span className="text-white/70 font-normal">({bill.customerPhone})</span>}
           </div>
 
           <div className="mt-4 pt-3 border-t border-white/15 flex justify-around text-center">

@@ -8,6 +8,10 @@ import {
   saveCoupons 
 } from '../../utils/storage';
 import { 
+  saveCouponsToFirestore,
+  subscribeToCouponsFromFirestore 
+} from '../../services/firebase';
+import { 
   Tag, 
   Plus, 
   Trash2, 
@@ -35,11 +39,18 @@ export const CouponManagerSection: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const refreshCoupons = () => {
-    setCoupons(getStoredCoupons());
+    const list = getStoredCoupons();
+    setCoupons(list);
   };
 
   useEffect(() => {
     refreshCoupons();
+    const unsubscribe = subscribeToCouponsFromFirestore((cloudCoupons) => {
+      if (cloudCoupons && Array.isArray(cloudCoupons)) {
+        setCoupons(cloudCoupons);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleAddCoupon = (e: React.FormEvent) => {
@@ -80,7 +91,9 @@ export const CouponManagerSection: React.FC = () => {
       isActive: true,
     });
 
-    refreshCoupons();
+    const updated = getStoredCoupons();
+    saveCouponsToFirestore(updated).catch(() => {});
+    setCoupons(updated);
 
     // Reset form
     setNewCode('');
@@ -93,13 +106,17 @@ export const CouponManagerSection: React.FC = () => {
   const handleDelete = (couponId: string, code: string) => {
     if (window.confirm(`Are you sure you want to delete coupon code "${code}"?`)) {
       deleteCouponCode(couponId);
-      refreshCoupons();
+      const updated = getStoredCoupons();
+      saveCouponsToFirestore(updated).catch(() => {});
+      setCoupons(updated);
     }
   };
 
   const handleToggle = (couponId: string) => {
     toggleCouponActive(couponId);
-    refreshCoupons();
+    const updated = getStoredCoupons();
+    saveCouponsToFirestore(updated).catch(() => {});
+    setCoupons(updated);
   };
 
   const filteredCoupons = coupons.filter((c) => {

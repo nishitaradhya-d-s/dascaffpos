@@ -225,6 +225,16 @@ export function generateKotPdfDoc(bill: BillRecord, settings: CafeSettings): jsP
   y += 4;
 
   doc.setFont('courier', 'bold');
+  doc.text(`Customer: ${bill.customerName || 'Walk-in'}`, 6, y);
+  y += 4;
+
+  if (bill.customerPhone) {
+    doc.setFont('courier', 'normal');
+    doc.text(`Phone: ${bill.customerPhone}`, 6, y);
+    y += 4;
+  }
+
+  doc.setFont('courier', 'bold');
   doc.text(`Table: ${tableDisplay} (${bill.orderType})`, 6, y);
   y += 3;
 

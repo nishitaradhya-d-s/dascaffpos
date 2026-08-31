@@ -454,6 +454,7 @@ export function generateKotHtml(bill: BillRecord, settings: CafeSettings): strin
         <div class="kot-title">KOT No: ${kotNo}</div>
         <div class="meta-line">Date: ${dateStr} ${timeStr}</div>
         <div class="meta-line">Bill No: ${bill.billNumber}</div>
+        <div class="meta-line" style="font-weight: 700;">Customer: ${bill.customerName || 'Walk-in'}${bill.customerPhone ? ` (${bill.customerPhone})` : ''}</div>
         <div class="meta-line" style="font-weight: 700;">Table: ${tableDisplay} (${bill.orderType})</div>
 
         <div class="divider"></div>

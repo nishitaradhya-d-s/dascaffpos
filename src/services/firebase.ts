@@ -5,13 +5,11 @@ import {
   doc, 
   setDoc, 
   deleteDoc, 
+  getDoc,
   getDocs, 
   onSnapshot, 
   query, 
-  orderBy, 
-  writeBatch,
-  enableNetwork,
-  disableNetwork
+  writeBatch
 } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -30,6 +28,8 @@ import {
   saveBillRecord, 
   getStoredMenu, 
   saveMenu, 
+  getStoredCategories,
+  saveCategories,
   getStoredCombos, 
   saveCombos, 
   getStoredSettings, 
@@ -39,7 +39,9 @@ import {
   getStoredAddons,
   saveAddons,
   getStoredCoupons,
-  saveCoupons
+  saveCoupons,
+  getStoredRawMaterials,
+  saveRawMaterials
 } from '../utils/storage';
 
 // Initialize Firebase App
@@ -76,13 +78,19 @@ const BILLS_COLLECTION = 'bills';
 export async function saveBillToFirestore(bill: BillRecord): Promise<void> {
   try {
     const docRef = doc(db, BILLS_COLLECTION, bill.id);
-    // Sanitize any undefined values before saving to Firestore
     const sanitized = JSON.parse(JSON.stringify(bill));
     await setDoc(docRef, {
       ...sanitized,
       updatedAt: new Date().toISOString(),
       timestamp: new Date(bill.date).getTime() || Date.now(),
     }, { merge: true });
+
+    // Also update cloud invoice sequence
+    const numPart = bill.billNumber.replace(/[^0-9]/g, '');
+    const seq = parseInt(numPart, 10);
+    if (!isNaN(seq) && seq > 0) {
+      saveSequenceToFirestore(seq).catch(() => {});
+    }
   } catch (error) {
     console.error('Error saving bill to Firestore:', error);
   }
@@ -177,7 +185,6 @@ export async function uploadLocalBillsToCloud(billsToUpload?: BillRecord[]): Pro
     if (!bills || bills.length === 0) return { uploaded: 0, total: 0 };
 
     let count = 0;
-    // Process in batches of 200
     const batchSize = 200;
     for (let i = 0; i < bills.length; i += batchSize) {
       const chunk = bills.slice(i, i + batchSize);
@@ -207,16 +214,40 @@ export async function uploadLocalBillsToCloud(billsToUpload?: BillRecord[]): Pro
 }
 
 // ==========================================
-// 2. RESTAURANT SETTINGS & MENU CLOUD SYNC
+// 2. INVOICE SEQUENCE CLOUD SYNC
 // ==========================================
-const SETTINGS_DOC = 'config/settings';
-const MENU_COLLECTION = 'menu_items';
-const COMBOS_COLLECTION = 'combos';
-const TABLES_COLLECTION = 'tables';
+export async function saveSequenceToFirestore(seq: number): Promise<void> {
+  try {
+    const docRef = doc(db, 'config', 'invoice_sequence');
+    await setDoc(docRef, {
+      lastInvoiceSeq: seq,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error saving sequence to Firestore:', error);
+  }
+}
 
-/**
- * Save settings to Cloud
- */
+export function subscribeToSequenceFromFirestore(onUpdate: (seq: number) => void): () => void {
+  try {
+    const docRef = doc(db, 'config', 'invoice_sequence');
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && typeof data.lastInvoiceSeq === 'number') {
+          onUpdate(data.lastInvoiceSeq);
+        }
+      }
+    });
+    return unsubscribe;
+  } catch (err) {
+    return () => {};
+  }
+}
+
+// ==========================================
+// 3. RESTAURANT SETTINGS CLOUD SYNC
+// ==========================================
 export async function saveSettingsToFirestore(settings: CafeSettings): Promise<void> {
   try {
     const docRef = doc(db, 'config', 'restaurant_settings');
@@ -229,9 +260,6 @@ export async function saveSettingsToFirestore(settings: CafeSettings): Promise<v
   }
 }
 
-/**
- * Real-time listener for Settings
- */
 export function subscribeToSettingsFromFirestore(onUpdate: (settings: CafeSettings) => void): () => void {
   try {
     const docRef = doc(db, 'config', 'restaurant_settings');
@@ -243,7 +271,6 @@ export function subscribeToSettingsFromFirestore(onUpdate: (settings: CafeSettin
           onUpdate(data);
         }
       } else {
-        // Upload initial local settings
         const current = getStoredSettings();
         saveSettingsToFirestore(current);
       }
@@ -254,9 +281,9 @@ export function subscribeToSettingsFromFirestore(onUpdate: (settings: CafeSettin
   }
 }
 
-/**
- * Save Menu Items to Cloud
- */
+// ==========================================
+// 4. MENU ITEMS & CATEGORIES CLOUD SYNC
+// ==========================================
 export async function saveMenuToFirestore(menu: MenuItem[]): Promise<void> {
   try {
     const docRef = doc(db, 'config', 'menu_catalog');
@@ -269,9 +296,6 @@ export async function saveMenuToFirestore(menu: MenuItem[]): Promise<void> {
   }
 }
 
-/**
- * Real-time listener for Menu Catalog
- */
 export function subscribeToMenuFromFirestore(onUpdate: (menu: MenuItem[]) => void): () => void {
   try {
     const docRef = doc(db, 'config', 'menu_catalog');
@@ -283,7 +307,6 @@ export function subscribeToMenuFromFirestore(onUpdate: (menu: MenuItem[]) => voi
           onUpdate(data.items);
         }
       } else {
-        // Push local menu to cloud
         const current = getStoredMenu();
         if (current.length > 0) {
           saveMenuToFirestore(current);
@@ -296,9 +319,44 @@ export function subscribeToMenuFromFirestore(onUpdate: (menu: MenuItem[]) => voi
   }
 }
 
-/**
- * Save Combos to Cloud
- */
+export async function saveCategoriesToFirestore(categories: string[]): Promise<void> {
+  try {
+    const docRef = doc(db, 'config', 'categories_catalog');
+    await setDoc(docRef, {
+      categories: JSON.parse(JSON.stringify(categories)),
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error saving categories to Firestore:', error);
+  }
+}
+
+export function subscribeToCategoriesFromFirestore(onUpdate: (categories: string[]) => void): () => void {
+  try {
+    const docRef = doc(db, 'config', 'categories_catalog');
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.categories) && data.categories.length > 0) {
+          saveCategories(data.categories);
+          onUpdate(data.categories);
+        }
+      } else {
+        const current = getStoredCategories();
+        if (current.length > 0) {
+          saveCategoriesToFirestore(current);
+        }
+      }
+    });
+    return unsubscribe;
+  } catch (err) {
+    return () => {};
+  }
+}
+
+// ==========================================
+// 5. COMBOS & MEAL DEALS CLOUD SYNC
+// ==========================================
 export async function saveCombosToFirestore(combos: ComboItem[]): Promise<void> {
   try {
     const docRef = doc(db, 'config', 'combos_catalog');
@@ -311,16 +369,13 @@ export async function saveCombosToFirestore(combos: ComboItem[]): Promise<void> 
   }
 }
 
-/**
- * Real-time listener for Combos
- */
 export function subscribeToCombosFromFirestore(onUpdate: (combos: ComboItem[]) => void): () => void {
   try {
     const docRef = doc(db, 'config', 'combos_catalog');
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        if (data && Array.isArray(data.combos) && data.combos.length > 0) {
+        if (data && Array.isArray(data.combos)) {
           saveCombos(data.combos);
           onUpdate(data.combos);
         }
@@ -337,9 +392,85 @@ export function subscribeToCombosFromFirestore(onUpdate: (combos: ComboItem[]) =
   }
 }
 
-/**
- * Save Table Statuses to Cloud (for Live Table / KOT multi-screen syncing)
- */
+// ==========================================
+// 6. GLOBAL ADD-ONS & EXTRA RATES CLOUD SYNC
+// ==========================================
+export async function saveAddonsToFirestore(addons: GlobalAddon[]): Promise<void> {
+  try {
+    const docRef = doc(db, 'config', 'addons_catalog');
+    await setDoc(docRef, {
+      addons: JSON.parse(JSON.stringify(addons)),
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error saving addons to Firestore:', error);
+  }
+}
+
+export function subscribeToAddonsFromFirestore(onUpdate: (addons: GlobalAddon[]) => void): () => void {
+  try {
+    const docRef = doc(db, 'config', 'addons_catalog');
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.addons)) {
+          saveAddons(data.addons);
+          onUpdate(data.addons);
+        }
+      } else {
+        const current = getStoredAddons();
+        if (current.length > 0) {
+          saveAddonsToFirestore(current);
+        }
+      }
+    });
+    return unsubscribe;
+  } catch (err) {
+    return () => {};
+  }
+}
+
+// ==========================================
+// 7. COUPON CODES CLOUD SYNC
+// ==========================================
+export async function saveCouponsToFirestore(coupons: CouponCode[]): Promise<void> {
+  try {
+    const docRef = doc(db, 'config', 'coupons_catalog');
+    await setDoc(docRef, {
+      coupons: JSON.parse(JSON.stringify(coupons)),
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error saving coupons to Firestore:', error);
+  }
+}
+
+export function subscribeToCouponsFromFirestore(onUpdate: (coupons: CouponCode[]) => void): () => void {
+  try {
+    const docRef = doc(db, 'config', 'coupons_catalog');
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.coupons)) {
+          saveCoupons(data.coupons);
+          onUpdate(data.coupons);
+        }
+      } else {
+        const current = getStoredCoupons();
+        if (current.length > 0) {
+          saveCouponsToFirestore(current);
+        }
+      }
+    });
+    return unsubscribe;
+  } catch (err) {
+    return () => {};
+  }
+}
+
+// ==========================================
+// 8. TABLE STATUSES CLOUD SYNC
+// ==========================================
 export async function saveTablesToFirestore(tables: TableStatus[]): Promise<void> {
   try {
     const docRef = doc(db, 'config', 'tables_status');
@@ -352,9 +483,6 @@ export async function saveTablesToFirestore(tables: TableStatus[]): Promise<void
   }
 }
 
-/**
- * Real-time listener for Table Statuses
- */
 export function subscribeToTablesFromFirestore(onUpdate: (tables: TableStatus[]) => void): () => void {
   try {
     const docRef = doc(db, 'config', 'tables_status');
@@ -378,8 +506,49 @@ export function subscribeToTablesFromFirestore(onUpdate: (tables: TableStatus[])
   }
 }
 
+// ==========================================
+// 9. INVENTORY & RAW MATERIALS CLOUD SYNC
+// ==========================================
+export async function saveRawMaterialsToFirestore(materials: RawMaterial[]): Promise<void> {
+  try {
+    const docRef = doc(db, 'config', 'raw_materials_catalog');
+    await setDoc(docRef, {
+      materials: JSON.parse(JSON.stringify(materials)),
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error saving raw materials to Firestore:', error);
+  }
+}
+
+export function subscribeToRawMaterialsFromFirestore(onUpdate: (materials: RawMaterial[]) => void): () => void {
+  try {
+    const docRef = doc(db, 'config', 'raw_materials_catalog');
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.materials)) {
+          saveRawMaterials(data.materials);
+          onUpdate(data.materials);
+        }
+      } else {
+        const current = getStoredRawMaterials();
+        if (current.length > 0) {
+          saveRawMaterialsToFirestore(current);
+        }
+      }
+    });
+    return unsubscribe;
+  } catch (err) {
+    return () => {};
+  }
+}
+
+// ==========================================
+// 10. ONE-CLICK COMPLETE CLOUD DATABASE SYNC
+// ==========================================
 /**
- * One-click full synchronization (Uploads all local data: bills, menu, combos, settings, tables)
+ * One-click full synchronization (Uploads and syncs all local data: bills, menu, combos, settings, tables, inventory)
  */
 export async function performFullCloudSync(): Promise<{
   billsCount: number;
@@ -390,16 +559,24 @@ export async function performFullCloudSync(): Promise<{
 
   const bills = getStoredBills();
   const menu = getStoredMenu();
+  const categories = getStoredCategories();
   const combos = getStoredCombos();
+  const addons = getStoredAddons();
+  const coupons = getStoredCoupons();
   const settings = getStoredSettings();
   const tables = getStoredTables();
+  const materials = getStoredRawMaterials();
 
   await Promise.all([
     uploadLocalBillsToCloud(bills),
     saveMenuToFirestore(menu),
+    saveCategoriesToFirestore(categories),
     saveCombosToFirestore(combos),
+    saveAddonsToFirestore(addons),
+    saveCouponsToFirestore(coupons),
     saveSettingsToFirestore(settings),
     saveTablesToFirestore(tables),
+    saveRawMaterialsToFirestore(materials),
   ]);
 
   return {
@@ -408,3 +585,4 @@ export async function performFullCloudSync(): Promise<{
     combosCount: combos.length,
   };
 }
+

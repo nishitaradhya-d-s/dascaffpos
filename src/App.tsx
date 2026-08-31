@@ -35,7 +35,16 @@ import {
   saveMenuToFirestore,
   subscribeToSettingsFromFirestore,
   saveSettingsToFirestore,
-  uploadLocalBillsToCloud
+  subscribeToCombosFromFirestore,
+  saveCombosToFirestore,
+  subscribeToCategoriesFromFirestore,
+  subscribeToAddonsFromFirestore,
+  subscribeToCouponsFromFirestore,
+  subscribeToTablesFromFirestore,
+  subscribeToRawMaterialsFromFirestore,
+  subscribeToSequenceFromFirestore,
+  uploadLocalBillsToCloud,
+  performFullCloudSync
 } from './services/firebase';
 import { printReceipt } from './utils/printer';
 import { decodeBillFromUrlSafeString } from './utils/messaging';
@@ -93,7 +102,7 @@ export default function App() {
     }
   });
 
-  // Settings & Menu storage
+  // Settings, Menu, Combos & Bills storage
   const [settings, setSettings] = useState<CafeSettings>(() => getStoredSettings());
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => getStoredMenu());
   const [bills, setBills] = useState<BillRecord[]>(() => {
@@ -102,7 +111,7 @@ export default function App() {
   });
   const [cloudSyncStatus, setCloudSyncStatus] = useState<'connected' | 'syncing' | 'offline'>('connected');
 
-  // Real-time Cloud Synchronization (Works across Chrome, Safari, Edge, Mobile without requiring email)
+  // Real-time Cloud Database Synchronization (Works seamlessly across Chrome, Firefox, Safari, Edge, Mobile, Tab & Laptop)
   useEffect(() => {
     // 1. Subscribe to real-time Bills stream
     const unsubBills = subscribeToBillsFromFirestore(
@@ -122,18 +131,17 @@ export default function App() {
       }
     });
 
-    // 3. Subscribe to real-time Menu stream
+    // 3. Subscribe to real-time Menu items stream
     const unsubMenu = subscribeToMenuFromFirestore((cloudMenu) => {
       if (cloudMenu && cloudMenu.length > 0) {
         setMenuItems(cloudMenu);
       }
     });
 
-    // 4. Initial check: Ensure any bills created locally till now are migrated to Firestore
-    const localBills = getStoredBills();
-    if (localBills && localBills.length > 0) {
-      uploadLocalBillsToCloud(localBills).catch(() => {});
-    }
+    // 4. Perform background full sync to ensure any data saved locally till now is updated to Firestore
+    performFullCloudSync().catch((err) => {
+      console.warn('Initial cloud sync background note:', err);
+    });
 
     return () => {
       unsubBills();

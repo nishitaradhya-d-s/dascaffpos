@@ -13,7 +13,9 @@ import {
   Timer, 
   Utensils, 
   Flame,
-  Check
+  Check,
+  User,
+  Phone
 } from 'lucide-react';
 
 interface KotBoardProps {
@@ -152,7 +154,16 @@ export const KotBoard: React.FC<KotBoardProps> = ({
                           {bill.orderType} {bill.tableNumber ? `(${bill.tableNumber})` : ''}
                         </span>
                       </div>
-                      <div className="text-[11px] text-amber-100/70 font-mono mt-0.5">
+                      <div className="text-[12px] font-bold text-white flex items-center gap-1 mt-0.5">
+                        <User className="w-3.5 h-3.5 text-amber-200" />
+                        <span>{bill.customerName || 'Walk-in'}</span>
+                        {bill.customerPhone && (
+                          <span className="text-[11px] text-amber-100/70 font-mono font-normal">
+                            ({bill.customerPhone})
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-amber-100/60 font-mono">
                         Bill: {bill.billNumber}
                       </div>
                     </div>

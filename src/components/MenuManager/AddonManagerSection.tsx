@@ -10,6 +10,10 @@ import {
   resetAddonsToDefault 
 } from '../../utils/storage';
 import { 
+  saveAddonsToFirestore,
+  subscribeToAddonsFromFirestore 
+} from '../../services/firebase';
+import { 
   Plus, 
   Edit3, 
   Trash2, 
@@ -44,6 +48,12 @@ export const AddonManagerSection: React.FC = () => {
 
   useEffect(() => {
     loadAddons();
+    const unsubscribe = subscribeToAddonsFromFirestore((cloudAddons) => {
+      if (cloudAddons && Array.isArray(cloudAddons)) {
+        setAddons(cloudAddons);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   const showNotification = (msg: string) => {
@@ -77,7 +87,9 @@ export const AddonManagerSection: React.FC = () => {
     };
 
     updateAddonItem(updated);
-    loadAddons();
+    const list = getStoredAddons();
+    saveAddonsToFirestore(list).catch(() => {});
+    setAddons(list);
     setEditingId(null);
     showNotification(`Updated "${updated.name}" price to ₹${updated.price}`);
   };
@@ -92,7 +104,9 @@ export const AddonManagerSection: React.FC = () => {
       price: newPriceVal,
     };
     updateAddonItem(updated);
-    loadAddons();
+    const list = getStoredAddons();
+    saveAddonsToFirestore(list).catch(() => {});
+    setAddons(list);
     showNotification(`Updated price to ₹${newPriceVal}`);
   };
 
@@ -109,7 +123,9 @@ export const AddonManagerSection: React.FC = () => {
     };
 
     addAddonItem(newAddon);
-    loadAddons();
+    const list = getStoredAddons();
+    saveAddonsToFirestore(list).catch(() => {});
+    setAddons(list);
     setIsCreating(false);
     setNewName('');
     setNewPrice(20);
@@ -119,20 +135,26 @@ export const AddonManagerSection: React.FC = () => {
   const handleDelete = (id: string, name: string) => {
     if (confirm(`Delete add-on "${name}"?`)) {
       deleteAddonItem(id);
-      loadAddons();
+      const list = getStoredAddons();
+      saveAddonsToFirestore(list).catch(() => {});
+      setAddons(list);
       showNotification(`Deleted "${name}"`);
     }
   };
 
   const handleToggle = (id: string) => {
     toggleAddonActive(id);
-    loadAddons();
+    const list = getStoredAddons();
+    saveAddonsToFirestore(list).catch(() => {});
+    setAddons(list);
   };
 
   const handleReset = () => {
     if (confirm('Reset all add-ons and extra prices to factory defaults? (Extra Cheese ₹20, Extra Topping ₹30, Cheesy Dip ₹25, etc.)')) {
       resetAddonsToDefault();
-      loadAddons();
+      const list = getStoredAddons();
+      saveAddonsToFirestore(list).catch(() => {});
+      setAddons(list);
       showNotification('Reset add-on rates to default values');
     }
   };

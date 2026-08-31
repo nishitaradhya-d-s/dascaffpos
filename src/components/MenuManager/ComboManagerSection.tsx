@@ -11,6 +11,10 @@ import {
   normalizeCategoryName 
 } from '../../utils/storage';
 import { 
+  saveCombosToFirestore,
+  subscribeToCombosFromFirestore 
+} from '../../services/firebase';
+import { 
   Plus, 
   Edit3, 
   Trash2, 
@@ -30,10 +34,16 @@ import {
 
 interface ComboManagerSectionProps {
   menuItems: MenuItem[];
+  combos?: ComboItem[];
+  onCombosUpdated?: (combos: ComboItem[]) => void;
 }
 
-export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuItems }) => {
-  const [combos, setCombos] = useState<ComboItem[]>([]);
+export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ 
+  menuItems, 
+  combos: externalCombos, 
+  onCombosUpdated 
+}) => {
+  const [combos, setCombos] = useState<ComboItem[]>(() => externalCombos || getStoredCombos());
   const [isCreating, setIsCreating] = useState(false);
   const [editingComboId, setEditingComboId] = useState<string | null>(null);
   const modalScrollRef = useRef<HTMLDivElement>(null);
@@ -76,11 +86,28 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
   }, [menuItems]);
 
   const loadCombos = () => {
-    setCombos(getStoredCombos());
+    const list = getStoredCombos();
+    setCombos(list);
+    onCombosUpdated?.(list);
   };
 
   useEffect(() => {
-    loadCombos();
+    if (externalCombos && externalCombos.length > 0) {
+      setCombos(externalCombos);
+    } else {
+      loadCombos();
+    }
+  }, [externalCombos]);
+
+  // Subscribe to real-time cloud updates
+  useEffect(() => {
+    const unsubscribe = subscribeToCombosFromFirestore((cloudCombos) => {
+      if (cloudCombos && Array.isArray(cloudCombos)) {
+        setCombos(cloudCombos);
+        onCombosUpdated?.(cloudCombos);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
   const showNotification = (msg: string) => {
@@ -228,8 +255,17 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
       slots,
     };
 
+    // 1. Add locally
     addComboItem(newCombo);
-    loadCombos();
+    const updated = getStoredCombos();
+
+    // 2. Push immediately to Cloud Firestore
+    saveCombosToFirestore(updated).catch(() => {});
+
+    // 3. Update React state & props callback
+    setCombos(updated);
+    onCombosUpdated?.(updated);
+
     setIsCreating(false);
     setEditingComboId(null);
     showNotification(`Saved Combo "${newCombo.name}" at ₹${newCombo.price}`);
@@ -238,20 +274,28 @@ export const ComboManagerSection: React.FC<ComboManagerSectionProps> = ({ menuIt
   const handleDelete = (id: string, name: string) => {
     if (confirm(`Delete combo "${name}"?`)) {
       deleteComboItem(id);
-      loadCombos();
+      const updated = getStoredCombos();
+      saveCombosToFirestore(updated).catch(() => {});
+      setCombos(updated);
+      onCombosUpdated?.(updated);
       showNotification(`Deleted combo "${name}"`);
     }
   };
 
   const handleToggle = (id: string) => {
     toggleComboActive(id);
-    loadCombos();
+    const updated = getStoredCombos();
+    saveCombosToFirestore(updated).catch(() => {});
+    setCombos(updated);
+    onCombosUpdated?.(updated);
   };
 
   const handleResetDefaults = () => {
     if (confirm('Reset all combos to factory default combo meals?')) {
-      resetCombosToDefault();
-      loadCombos();
+      const def = resetCombosToDefault();
+      saveCombosToFirestore(def).catch(() => {});
+      setCombos(def);
+      onCombosUpdated?.(def);
       showNotification('Reset combo meals to defaults');
     }
   };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { 
   CartItem, 
   MenuItem, 
@@ -65,6 +65,10 @@ export const CartPanel: React.FC<CartPanelProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
+  const [customerNameError, setCustomerNameError] = useState<string | null>(null);
+  const [customerPhoneError, setCustomerPhoneError] = useState<string | null>(null);
+  const customerNameInputRef = useRef<HTMLInputElement>(null);
+  const customerPhoneInputRef = useRef<HTMLInputElement>(null);
 
   // Quick Select & Open Rate
   const [selectedQuickId, setSelectedQuickId] = useState('');
@@ -338,8 +342,8 @@ export const CartPanel: React.FC<CartPanelProps> = ({
       date: new Date().toISOString(),
       orderType,
       tableNumber: orderType === 'Dine-In' ? tableNumber : undefined,
-      customerName: customerName.trim() || 'Walk-in',
-      customerPhone: customerPhone.trim() || undefined,
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
       items: cartItems,
       taxDetails,
       billType: 'GST_Customer',
@@ -354,8 +358,44 @@ export const CartPanel: React.FC<CartPanelProps> = ({
     };
   };
 
+  const validateCustomerInfo = (): boolean => {
+    let isValid = true;
+    const trimmedName = customerName.trim();
+    const trimmedPhone = customerPhone.trim();
+
+    if (!trimmedName) {
+      setCustomerNameError('Customer name is compulsory');
+      isValid = false;
+    } else {
+      setCustomerNameError(null);
+    }
+
+    if (!trimmedPhone) {
+      setCustomerPhoneError('Phone number is compulsory');
+      isValid = false;
+    } else if (trimmedPhone.replace(/[^0-9]/g, '').length < 7) {
+      setCustomerPhoneError('Enter a valid mobile/phone number');
+      isValid = false;
+    } else {
+      setCustomerPhoneError(null);
+    }
+
+    if (!isValid) {
+      if (!trimmedName) {
+        customerNameInputRef.current?.focus();
+      } else if (!trimmedPhone) {
+        customerPhoneInputRef.current?.focus();
+      }
+    }
+
+    return isValid;
+  };
+
   const handleSettle = (printMode?: 'bill' | 'kot' | 'both') => {
     if (cartItems.length === 0) return;
+    if (!validateCustomerInfo()) {
+      return;
+    }
     const bill = buildBillRecord();
     onSettleBill(bill, printMode);
   };
@@ -447,35 +487,75 @@ export const CartPanel: React.FC<CartPanelProps> = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-[#8B7E74] uppercase mb-1">
-              Customer Name
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-bold text-[#8B7E74] uppercase flex items-center gap-0.5">
+                <span>Customer Name</span>
+                <span className="text-rose-600 font-bold">*</span>
+              </label>
+              <span className="text-[9px] font-bold text-rose-600 uppercase tracking-tight bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+                Compulsory
+              </span>
+            </div>
             <div className="relative">
-              <User className="w-3.5 h-3.5 text-[#8B7E74] absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <User className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${customerNameError ? 'text-rose-500' : 'text-[#8B7E74]'}`} />
               <input
+                ref={customerNameInputRef}
                 type="text"
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Walk-in"
-                className="w-full bg-white border border-[#E0D7D0] rounded-lg py-1.5 pl-8 pr-2 text-xs text-[#2D241E] placeholder:text-[#8B7E74] focus:outline-hidden focus:border-[#4B3621]"
+                onChange={(e) => {
+                  setCustomerName(e.target.value);
+                  if (customerNameError) setCustomerNameError(null);
+                }}
+                placeholder="Enter customer name"
+                className={`w-full bg-white border rounded-lg py-1.5 pl-8 pr-2 text-xs text-[#2D241E] placeholder:text-[#8B7E74] focus:outline-hidden ${
+                  customerNameError 
+                    ? 'border-rose-500 bg-rose-50/40 ring-1 ring-rose-500/50' 
+                    : 'border-[#E0D7D0] focus:border-[#4B3621]'
+                }`}
               />
             </div>
+            {customerNameError && (
+              <p className="text-[10px] text-rose-600 font-bold mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                <span>{customerNameError}</span>
+              </p>
+            )}
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-[#8B7E74] uppercase mb-1">
-              Mobile (WhatsApp)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-bold text-[#8B7E74] uppercase flex items-center gap-0.5">
+                <span>Mobile (WhatsApp)</span>
+                <span className="text-rose-600 font-bold">*</span>
+              </label>
+              <span className="text-[9px] font-bold text-rose-600 uppercase tracking-tight bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+                Compulsory
+              </span>
+            </div>
             <div className="relative">
-              <Phone className="w-3.5 h-3.5 text-[#8B7E74] absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <Phone className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${customerPhoneError ? 'text-rose-500' : 'text-[#8B7E74]'}`} />
               <input
+                ref={customerPhoneInputRef}
                 type="tel"
                 value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="10-digit #"
-                className="w-full bg-white border border-[#E0D7D0] rounded-lg py-1.5 pl-8 pr-2 text-xs text-[#2D241E] placeholder:text-[#8B7E74] focus:outline-hidden focus:border-[#4B3621] font-mono"
+                onChange={(e) => {
+                  setCustomerPhone(e.target.value);
+                  if (customerPhoneError) setCustomerPhoneError(null);
+                }}
+                placeholder="10-digit mobile #"
+                className={`w-full bg-white border rounded-lg py-1.5 pl-8 pr-2 text-xs text-[#2D241E] placeholder:text-[#8B7E74] focus:outline-hidden font-mono ${
+                  customerPhoneError 
+                    ? 'border-rose-500 bg-rose-50/40 ring-1 ring-rose-500/50' 
+                    : 'border-[#E0D7D0] focus:border-[#4B3621]'
+                }`}
               />
             </div>
+            {customerPhoneError && (
+              <p className="text-[10px] text-rose-600 font-bold mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                <span>{customerPhoneError}</span>
+              </p>
+            )}
           </div>
         </div>
 
@@ -1049,6 +1129,13 @@ export const CartPanel: React.FC<CartPanelProps> = ({
 
       {/* Fixed Bottom Action Panel */}
       <div className="p-3 bg-white border-t border-[#E0D7D0] space-y-2 shrink-0">
+        {(customerNameError || customerPhoneError) && (
+          <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-1.5 animate-shake">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>Please fill compulsory Customer Name &amp; Mobile Number above.</span>
+          </div>
+        )}
+
         {/* Row 1: Direct Send KOT & Bill primary button */}
         <button
           type="button"

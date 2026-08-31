@@ -113,11 +113,19 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
       alert('Invoice must contain at least one item.');
       return;
     }
+    if (!customerName.trim()) {
+      alert('Customer Name is compulsory.');
+      return;
+    }
+    if (!customerPhone.trim()) {
+      alert('Customer Phone Number is compulsory.');
+      return;
+    }
 
     const updatedBill: BillRecord = {
       ...bill,
-      customerName: customerName.trim() || 'Walk-in',
-      customerPhone: customerPhone.trim() || undefined,
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
       tableNumber: tableNumber.trim() || undefined,
       paymentMode,
       notes: notes.trim() || undefined,
@@ -157,29 +165,43 @@ export const EditInvoiceModal: React.FC<EditInvoiceModalProps> = ({
           {/* Metadata Section */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#F9F7F5] p-3.5 rounded-xl border border-[#E0D7D0]">
             <div>
-              <label className="block text-[10.5px] font-bold text-[#8B7E74] uppercase tracking-wider mb-1 flex items-center gap-1">
-                <User className="w-3 h-3 text-[#4B3621]" />
-                <span>Customer Name</span>
+              <label className="block text-[10.5px] font-bold text-[#8B7E74] uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <User className="w-3 h-3 text-[#4B3621]" />
+                  <span>Customer Name</span>
+                  <span className="text-rose-600 font-bold">*</span>
+                </span>
+                <span className="text-[9px] text-rose-600 font-bold bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+                  Compulsory
+                </span>
               </label>
               <input
                 type="text"
+                required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Walk-in"
+                placeholder="Enter customer name"
                 className="w-full bg-white border border-[#E0D7D0] rounded-lg px-2.5 py-1.5 text-xs text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
               />
             </div>
 
             <div>
-              <label className="block text-[10.5px] font-bold text-[#8B7E74] uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Phone className="w-3 h-3 text-[#4B3621]" />
-                <span>Customer Phone</span>
+              <label className="block text-[10.5px] font-bold text-[#8B7E74] uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-[#4B3621]" />
+                  <span>Customer Phone</span>
+                  <span className="text-rose-600 font-bold">*</span>
+                </span>
+                <span className="text-[9px] text-rose-600 font-bold bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+                  Compulsory
+                </span>
               </label>
               <input
                 type="tel"
+                required
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="10-digit mobile"
+                placeholder="10-digit mobile #"
                 className="w-full bg-white border border-[#E0D7D0] rounded-lg px-2.5 py-1.5 text-xs text-[#2D241E] focus:outline-hidden focus:border-[#4B3621]"
               />
             </div>
