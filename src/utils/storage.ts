@@ -15,7 +15,8 @@ import {
   RecipeIngredient,
   GlobalAddon,
   CouponCode,
-  ComboItem
+  ComboItem,
+  SectionHierarchy
 } from '../types';
 import { DEFAULT_MENU_ITEMS } from '../data/defaultMenu';
 import { DEFAULT_SETTINGS } from '../data/defaultSettings';
@@ -51,6 +52,7 @@ const KEYS = {
   SEQ_RESET_ACTIVE: 'dascaff_seq_reset_active_v3',
   COUPONS: 'dascaff_coupons_v3',
   COMBOS: 'dascaff_combos_v3',
+  SECTIONS: 'dascaff_sections_hierarchy_v3',
 };
 
 // Safe JSON parser
@@ -486,12 +488,26 @@ export function normalizeCategoryName(cat: string): string {
 // 2. Menu Items & Categories
 export function getStoredMenu(): MenuItem[] {
   const items = safeParse<MenuItem[]>(KEYS.MENU, DEFAULT_MENU_ITEMS);
+  
+  // Build lookup map from DEFAULT_MENU_ITEMS to fill in missing subCategories or default properties
+  const defaultMap = new Map<string, MenuItem>();
+  DEFAULT_MENU_ITEMS.forEach((d) => {
+    defaultMap.set(d.id, d);
+    defaultMap.set(d.name.toLowerCase().trim(), d);
+  });
+
   return items
     .filter((m) => m && m.category !== 'Combos')
-    .map((m) => ({
-      ...m,
-      category: normalizeCategoryName(m.category),
-    }));
+    .map((m) => {
+      const def = defaultMap.get(m.id) || defaultMap.get((m.name || '').toLowerCase().trim());
+      const subCategory = m.subCategory || (def ? def.subCategory : undefined);
+
+      return {
+        ...m,
+        category: normalizeCategoryName(m.category),
+        subCategory: subCategory ? subCategory.trim() : undefined,
+      };
+    });
 }
 
 export function saveMenu(menu: MenuItem[]): void {
@@ -504,7 +520,183 @@ export function resetMenuToDefault(): MenuItem[] {
   return DEFAULT_MENU_ITEMS;
 }
 
+export const DEFAULT_SECTION_HIERARCHIES: SectionHierarchy[] = [
+  {
+    section: 'Pizzas',
+    subSections: ['Creamy Pizzas', 'Fav Pizzas', 'Banger Pizzas', 'Paneer Pizzas', 'Chicken Pizzas'],
+  },
+  {
+    section: 'Burgers',
+    subSections: ['Veg Burgers', 'Chicken Burgers'],
+  },
+  {
+    section: 'Sandwiches',
+    subSections: ['Grilled Sandwiches'],
+  },
+  {
+    section: 'French Fries',
+    subSections: ['Classic & Peri Peri Fries', 'Loaded & Cheesy Fries'],
+  },
+  {
+    section: 'Sides',
+    subSections: ['Veg Sides', 'Non-Veg Sides'],
+  },
+  {
+    section: 'Wraps',
+    subSections: ['Wraps & Rolls'],
+  },
+  {
+    section: 'Pastas',
+    subSections: ['Italian Pastas'],
+  },
+  {
+    section: 'Maggies',
+    subSections: ['Special Maggies'],
+  },
+  {
+    section: 'Mojitos & Beverages',
+    subSections: ['Fresh Mojitos', 'Cold Beverages'],
+  },
+];
+
+export function getStoredSectionHierarchies(): SectionHierarchy[] {
+  const raw = safeParse<SectionHierarchy[]>(KEYS.SECTIONS, DEFAULT_SECTION_HIERARCHIES);
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return DEFAULT_SECTION_HIERARCHIES;
+  }
+  return raw;
+}
+
+export function saveSectionHierarchies(hierarchies: SectionHierarchy[]): void {
+  safeSet(KEYS.SECTIONS, hierarchies);
+  // Also synchronize flat categories list
+  const categoryNames = hierarchies.map((h) => h.section).filter(Boolean);
+  saveCategories(categoryNames);
+}
+
+export function addSectionHierarchy(sectionName: string, initialSubSections: string[] = []): SectionHierarchy[] {
+  const trimmed = sectionName.trim();
+  if (!trimmed) return getStoredSectionHierarchies();
+  const current = getStoredSectionHierarchies();
+  const exists = current.find((s) => s.section.toLowerCase() === trimmed.toLowerCase());
+  if (exists) return current;
+
+  const updated = [
+    ...current,
+    {
+      section: trimmed,
+      subSections: initialSubSections.map((s) => s.trim()).filter(Boolean),
+    },
+  ];
+  saveSectionHierarchies(updated);
+  return updated;
+}
+
+export function renameSectionHierarchy(oldName: string, newName: string): SectionHierarchy[] {
+  const trimmedNew = newName.trim();
+  if (!trimmedNew || oldName.trim().toLowerCase() === trimmedNew.toLowerCase()) {
+    return getStoredSectionHierarchies();
+  }
+  const current = getStoredSectionHierarchies();
+  const updated = current.map((s) => {
+    if (s.section.toLowerCase() === oldName.trim().toLowerCase()) {
+      return { ...s, section: trimmedNew };
+    }
+    return s;
+  });
+  saveSectionHierarchies(updated);
+
+  // Update all menu items that belong to the old section name
+  const menu = getStoredMenu();
+  const updatedMenu = menu.map((item) => {
+    if (item.category.toLowerCase() === oldName.trim().toLowerCase()) {
+      return { ...item, category: trimmedNew };
+    }
+    return item;
+  });
+  saveMenu(updatedMenu);
+
+  return updated;
+}
+
+export function deleteSectionHierarchy(sectionName: string): SectionHierarchy[] {
+  const current = getStoredSectionHierarchies();
+  const updated = current.filter((s) => s.section.toLowerCase() !== sectionName.trim().toLowerCase());
+  saveSectionHierarchies(updated);
+  return updated;
+}
+
+export function addSubSectionHierarchy(sectionName: string, subSectionName: string): SectionHierarchy[] {
+  const trimmedSub = subSectionName.trim();
+  if (!trimmedSub) return getStoredSectionHierarchies();
+  const current = getStoredSectionHierarchies();
+  const updated = current.map((s) => {
+    if (s.section.toLowerCase() === sectionName.trim().toLowerCase()) {
+      const exists = s.subSections.some((sub) => sub.toLowerCase() === trimmedSub.toLowerCase());
+      if (exists) return s;
+      return {
+        ...s,
+        subSections: [...s.subSections, trimmedSub],
+      };
+    }
+    return s;
+  });
+  saveSectionHierarchies(updated);
+  return updated;
+}
+
+export function renameSubSectionHierarchy(sectionName: string, oldSubName: string, newSubName: string): SectionHierarchy[] {
+  const trimmedNew = newSubName.trim();
+  if (!trimmedNew) return getStoredSectionHierarchies();
+  const current = getStoredSectionHierarchies();
+  const updated = current.map((s) => {
+    if (s.section.toLowerCase() === sectionName.trim().toLowerCase()) {
+      return {
+        ...s,
+        subSections: s.subSections.map((sub) => (sub.toLowerCase() === oldSubName.trim().toLowerCase() ? trimmedNew : sub)),
+      };
+    }
+    return s;
+  });
+  saveSectionHierarchies(updated);
+
+  // Update all menu items in this section with the old subCategory
+  const menu = getStoredMenu();
+  const updatedMenu = menu.map((item) => {
+    if (
+      item.category.toLowerCase() === sectionName.trim().toLowerCase() &&
+      item.subCategory &&
+      item.subCategory.toLowerCase() === oldSubName.trim().toLowerCase()
+    ) {
+      return { ...item, subCategory: trimmedNew };
+    }
+    return item;
+  });
+  saveMenu(updatedMenu);
+
+  return updated;
+}
+
+export function deleteSubSectionHierarchy(sectionName: string, subSectionName: string): SectionHierarchy[] {
+  const current = getStoredSectionHierarchies();
+  const updated = current.map((s) => {
+    if (s.section.toLowerCase() === sectionName.trim().toLowerCase()) {
+      return {
+        ...s,
+        subSections: s.subSections.filter((sub) => sub.toLowerCase() !== subSectionName.trim().toLowerCase()),
+      };
+    }
+    return s;
+  });
+  saveSectionHierarchies(updated);
+  return updated;
+}
+
 export function getStoredCategories(): string[] {
+  const hierarchies = getStoredSectionHierarchies();
+  if (hierarchies.length > 0) {
+    return hierarchies.map((h) => h.section);
+  }
   const raw = safeParse<string[]>(KEYS.CATEGORIES, STANDARD_CATEGORIES);
   if (!Array.isArray(raw) || raw.length === 0) {
     return STANDARD_CATEGORIES;

@@ -33,6 +33,7 @@ export interface GlobalAddon {
   name: string;
   price: number;
   category?: string;
+  applicableSections?: string[]; // e.g. ["Pizzas", "Burgers"] or empty/undefined for All Sections
   isAvailable: boolean;
 }
 
@@ -69,7 +70,8 @@ export interface ComboItem {
 export interface MenuItem {
   id: string;
   name: string;
-  category: string;
+  category: string; // Main Section (e.g., "Pizzas", "Burgers")
+  subCategory?: string; // Sub-section (e.g., "Creamy Pizzas", "Fav Pizzas", "Veg Burgers")
   price: number;
   type: ItemType;
   description?: string;
@@ -80,11 +82,17 @@ export interface MenuItem {
   imageUrl?: string;
 }
 
+export interface SectionHierarchy {
+  section: string; // e.g., "Pizzas"
+  subSections: string[]; // e.g., ["Creamy Pizzas", "Fav Pizzas", "Banger Pizzas", "Paneer Pizzas", "Chicken Pizzas"]
+}
+
 export interface CartItem {
   cartItemId: string;
   menuItemId: string;
   name: string;
   category: string;
+  subCategory?: string;
   type: ItemType;
   unitPrice: number;
   quantity: number;

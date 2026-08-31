@@ -6,6 +6,17 @@ import { printReceipt } from '../../utils/printer';
 import { BillDetailModal } from '../BillHistory/BillDetailModal';
 import { DayClosingReportModal } from './DayClosingReportModal';
 import { 
+  getLocalDateString, 
+  getLocalMonthString, 
+  isToday, 
+  isYesterday, 
+  isThisMonth, 
+  isLastMonth, 
+  isSameLocalDate, 
+  isSameLocalMonth, 
+  isWithinLocalDateRange 
+} from '../../utils/dateUtils';
+import { 
   FileSpreadsheet, 
   Download, 
   Calendar, 
@@ -51,9 +62,9 @@ export const GstReports: React.FC<GstReportsProps> = ({
 }) => {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilterType>('today');
   
-  // Specific Date & Month states
-  const todayIso = new Date().toISOString().slice(0, 10);
-  const currentMonthIso = new Date().toISOString().slice(0, 7);
+  // Specific Date & Month states initialized with local calendar dates
+  const todayIso = getLocalDateString();
+  const currentMonthIso = getLocalMonthString();
   
   const [specificDate, setSpecificDate] = useState<string>(todayIso);
   const [specificMonth, setSpecificMonth] = useState<string>(currentMonthIso);
@@ -64,21 +75,11 @@ export const GstReports: React.FC<GstReportsProps> = ({
   const [selectedBillForDetail, setSelectedBillForDetail] = useState<BillRecord | null>(null);
   const [isDayClosingModalOpen, setIsDayClosingModalOpen] = useState(false);
 
-  // Today's specific bills for live revenue & day-closing
+  // Today's specific bills for live revenue & day-closing (Strict local date match)
   const todayBills = useMemo(() => {
-    const now = new Date();
-    const cYear = now.getFullYear();
-    const cMonth = now.getMonth();
-    const cDate = now.getDate();
-
     return bills.filter((b) => {
       if (b.status === 'Cancelled') return false;
-      const bd = new Date(b.date);
-      return (
-        bd.getDate() === cDate &&
-        bd.getMonth() === cMonth &&
-        bd.getFullYear() === cYear
-      );
+      return isToday(b.date);
     });
   }, [bills]);
 
@@ -99,7 +100,7 @@ export const GstReports: React.FC<GstReportsProps> = ({
     };
   }, [todayBills]);
 
-  // Filter bills by selected period & dates
+  // Filter bills by selected period & dates with 100% local calendar consistency
   const filteredBills = useMemo(() => {
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -108,40 +109,26 @@ export const GstReports: React.FC<GstReportsProps> = ({
     return bills.filter((b) => {
       if (b.status === 'Cancelled') return false;
       const bDate = new Date(b.date);
-      const bDateIso = b.date.slice(0, 10);
-      const bMonthIso = b.date.slice(0, 7);
 
       let periodMatch = true;
 
       if (selectedPeriod === 'today') {
-        periodMatch = (
-          bDate.getDate() === now.getDate() &&
-          bDate.getMonth() === currentMonth &&
-          bDate.getFullYear() === currentYear
-        );
+        periodMatch = isToday(b.date);
       } else if (selectedPeriod === 'yesterday') {
-        const yest = new Date();
-        yest.setDate(yest.getDate() - 1);
-        periodMatch = (
-          bDate.getDate() === yest.getDate() &&
-          bDate.getMonth() === yest.getMonth() &&
-          bDate.getFullYear() === yest.getFullYear()
-        );
+        periodMatch = isYesterday(b.date);
       } else if (selectedPeriod === 'this_month') {
-        periodMatch = bDate.getMonth() === currentMonth && bDate.getFullYear() === currentYear;
+        periodMatch = isThisMonth(b.date);
       } else if (selectedPeriod === 'last_month') {
-        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-        const yearOfLastMonth = currentMonth === 0 ? currentYear - 1 : currentYear;
-        periodMatch = bDate.getMonth() === lastMonth && bDate.getFullYear() === yearOfLastMonth;
+        periodMatch = isLastMonth(b.date);
       } else if (selectedPeriod === 'financial_year') {
         const fyStart = new Date(currentMonth >= 3 ? currentYear : currentYear - 1, 3, 1);
         periodMatch = bDate >= fyStart;
       } else if (selectedPeriod === 'specific_date') {
-        periodMatch = bDateIso === specificDate;
+        periodMatch = isSameLocalDate(b.date, specificDate);
       } else if (selectedPeriod === 'specific_month') {
-        periodMatch = bMonthIso === specificMonth;
+        periodMatch = isSameLocalMonth(b.date, specificMonth);
       } else if (selectedPeriod === 'custom_range') {
-        periodMatch = bDateIso >= fromDate && bDateIso <= toDate;
+        periodMatch = isWithinLocalDateRange(b.date, fromDate, toDate);
       }
 
       if (!periodMatch) return false;

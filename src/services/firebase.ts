@@ -21,7 +21,8 @@ import {
   TableStatus, 
   RawMaterial,
   GlobalAddon,
-  CouponCode
+  CouponCode,
+  SectionHierarchy
 } from '../types';
 import { 
   getStoredBills, 
@@ -30,6 +31,8 @@ import {
   saveMenu, 
   getStoredCategories,
   saveCategories,
+  getStoredSectionHierarchies,
+  saveSectionHierarchies,
   getStoredCombos, 
   saveCombos, 
   getStoredSettings, 
@@ -304,7 +307,9 @@ export function subscribeToMenuFromFirestore(onUpdate: (menu: MenuItem[]) => voi
         const data = snapshot.data();
         if (data && Array.isArray(data.items) && data.items.length > 0) {
           saveMenu(data.items);
-          onUpdate(data.items);
+          // Load through getStoredMenu to guarantee subCategory hydration
+          const enriched = getStoredMenu();
+          onUpdate(enriched);
         }
       } else {
         const current = getStoredMenu();
@@ -345,6 +350,41 @@ export function subscribeToCategoriesFromFirestore(onUpdate: (categories: string
         const current = getStoredCategories();
         if (current.length > 0) {
           saveCategoriesToFirestore(current);
+        }
+      }
+    });
+    return unsubscribe;
+  } catch (err) {
+    return () => {};
+  }
+}
+
+export async function saveSectionHierarchiesToFirestore(hierarchies: SectionHierarchy[]): Promise<void> {
+  try {
+    const docRef = doc(db, 'config', 'sections_catalog');
+    await setDoc(docRef, {
+      sections: JSON.parse(JSON.stringify(hierarchies)),
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error saving section hierarchies to Firestore:', error);
+  }
+}
+
+export function subscribeToSectionHierarchiesFromFirestore(onUpdate: (hierarchies: SectionHierarchy[]) => void): () => void {
+  try {
+    const docRef = doc(db, 'config', 'sections_catalog');
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.sections) && data.sections.length > 0) {
+          saveSectionHierarchies(data.sections);
+          onUpdate(data.sections);
+        }
+      } else {
+        const current = getStoredSectionHierarchies();
+        if (current.length > 0) {
+          saveSectionHierarchiesToFirestore(current);
         }
       }
     });

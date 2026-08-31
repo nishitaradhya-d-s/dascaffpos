@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { MenuItem, Variant, Addon, CartItem } from '../../types';
-import { getStoredAddons } from '../../utils/storage';
+import { getStoredAddons, normalizeCategoryName } from '../../utils/storage';
 import { X, Check, Plus, Minus, Layers } from 'lucide-react';
 
 interface ItemCustomizerModalProps {
@@ -21,27 +21,56 @@ export const ItemCustomizerModal: React.FC<ItemCustomizerModalProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [notes, setNotes] = useState<string>('');
 
-  // Fetch updated add-ons with current prices from storage
+  // Fetch updated add-ons with current prices from storage (filtered for this item's section/category)
   const effectiveAddons: Addon[] = useMemo(() => {
     if (!item) return [];
-    const storedGlobalAddons = getStoredAddons().filter((a) => a.isAvailable);
+    const itemCat = normalizeCategoryName(item.category).toLowerCase().trim();
 
-    // If item has specific add-ons configured, update their prices from global storage
+    const storedGlobalAddons = getStoredAddons().filter((a) => {
+      if (!a.isAvailable) return false;
+      // If applicableSections is specified and non-empty, check if this item's category matches
+      if (a.applicableSections && a.applicableSections.length > 0) {
+        return a.applicableSections.some((sec) => {
+          const s = normalizeCategoryName(sec).toLowerCase().trim();
+          return s === 'all' || s === itemCat || s.includes(itemCat) || itemCat.includes(s);
+        });
+      }
+      return true;
+    });
+
+    // Build unified map of all available add-ons with live prices
+    const addonsMap = new Map<string, Addon>();
+
+    // 1. Add all active global add-ons for this category
+    storedGlobalAddons.forEach((g) => {
+      addonsMap.set(g.id, {
+        id: g.id,
+        name: g.name,
+        price: g.price,
+        isAvailable: g.isAvailable,
+      });
+    });
+
+    // 2. If the item has any custom item-level add-ons, merge or update them
     if (item.availableAddons && item.availableAddons.length > 0) {
-      return item.availableAddons.map((itemAddon) => {
+      item.availableAddons.forEach((itemAddon) => {
         const matched = storedGlobalAddons.find(
-          (g) => g.id === itemAddon.id || g.name.toLowerCase() === itemAddon.name.toLowerCase()
+          (g) => g.id === itemAddon.id || g.name.toLowerCase().trim() === itemAddon.name.toLowerCase().trim()
         );
-        return matched ? { ...itemAddon, price: matched.price } : itemAddon;
+        if (matched) {
+          addonsMap.set(matched.id, {
+            id: matched.id,
+            name: matched.name,
+            price: matched.price,
+            isAvailable: matched.isAvailable,
+          });
+        } else {
+          addonsMap.set(itemAddon.id, itemAddon);
+        }
       });
     }
 
-    // Default global add-ons applicable to savory / hot / cold items
-    return storedGlobalAddons.map((g) => ({
-      id: g.id,
-      name: g.name,
-      price: g.price,
-    }));
+    return Array.from(addonsMap.values());
   }, [item, isOpen]);
 
   useEffect(() => {

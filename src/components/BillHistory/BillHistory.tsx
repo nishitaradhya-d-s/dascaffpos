@@ -6,18 +6,24 @@ import { downloadInvoicePdf } from '../../utils/pdfGenerator';
 import { EditInvoiceModal } from './EditInvoiceModal';
 import { ConfirmDeleteModal } from '../Common/ConfirmDeleteModal';
 import { 
+  getLocalDateString, 
+  isToday, 
+  isYesterday, 
+  isSameLocalDate 
+} from '../../utils/dateUtils';
+import { 
   Search, 
   Printer, 
   Download, 
   Eye, 
   Trash2, 
   FileSpreadsheet, 
-  FileText,
-  Layers,
-  ChefHat,
-  Receipt,
-  Edit3,
-  Calendar
+  FileText, 
+  Layers, 
+  ChefHat, 
+  Receipt, 
+  Edit3, 
+  Calendar 
 } from 'lucide-react';
 
 interface BillHistoryProps {
@@ -37,7 +43,7 @@ export const BillHistory: React.FC<BillHistoryProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<'today' | 'yesterday' | '7days' | 'month' | 'all' | 'custom'>('today');
-  const [customDate, setCustomDate] = useState<string>(new Date().toISOString().slice(0, 10));
+  const [customDate, setCustomDate] = useState<string>(getLocalDateString());
   const [orderTypeFilter, setOrderTypeFilter] = useState<string>('all');
   const [billToEdit, setBillToEdit] = useState<BillRecord | null>(null);
   const [billToDelete, setBillToDelete] = useState<BillRecord | null>(null);
@@ -45,12 +51,6 @@ export const BillHistory: React.FC<BillHistoryProps> = ({
   // Filter bills
   const filteredBills = useMemo(() => {
     const now = new Date();
-    const todayYear = now.getFullYear();
-    const todayMonth = now.getMonth();
-    const todayDate = now.getDate();
-
-    const yestDate = new Date(now);
-    yestDate.setDate(now.getDate() - 1);
 
     const sevenDaysAgo = new Date(now);
     sevenDaysAgo.setDate(now.getDate() - 7);
@@ -65,23 +65,15 @@ export const BillHistory: React.FC<BillHistoryProps> = ({
 
       // Date Filter
       if (dateFilter === 'today') {
-        const isToday =
-          bDate.getFullYear() === todayYear &&
-          bDate.getMonth() === todayMonth &&
-          bDate.getDate() === todayDate;
-        if (!isToday) return false;
+        if (!isToday(bill.date)) return false;
       } else if (dateFilter === 'yesterday') {
-        const isYesterday =
-          bDate.getFullYear() === yestDate.getFullYear() &&
-          bDate.getMonth() === yestDate.getMonth() &&
-          bDate.getDate() === yestDate.getDate();
-        if (!isYesterday) return false;
+        if (!isYesterday(bill.date)) return false;
       } else if (dateFilter === '7days') {
         if (bDate < sevenDaysAgo) return false;
       } else if (dateFilter === 'month') {
         if (bDate < firstOfMonth) return false;
       } else if (dateFilter === 'custom') {
-        if (bill.date.slice(0, 10) !== customDate) return false;
+        if (!isSameLocalDate(bill.date, customDate)) return false;
       }
 
       // Order Type Filter

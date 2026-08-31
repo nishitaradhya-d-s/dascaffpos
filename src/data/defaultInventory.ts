@@ -1,4 +1,4 @@
-import { RawMaterial, Supplier, TableStatus, RecipeMapping, StaffMember } from '../types';
+import { RawMaterial, Supplier, TableStatus, RecipeMapping, StaffMember, GlobalAddon } from '../types';
 
 export const DEFAULT_RAW_MATERIALS: RawMaterial[] = [
   { id: 'rm-1', name: 'Mozzarella Cheese', unit: 'kg', currentStock: 24.5, minThreshold: 5.0, costPerUnit: 420, supplierName: 'Dairy Fresh Foods' },
@@ -44,13 +44,13 @@ export const DEFAULT_STAFF: StaffMember[] = [
   { id: 'staff-4', name: 'Operations Manager', role: 'Manager', phone: '9845334455', loginPin: '4321', isActive: true, shiftsCompleted: 110, totalSalesHandled: 340900 },
 ];
 
-export const DEFAULT_GLOBAL_ADDONS = [
-  { id: 'addon-cheese', name: 'Extra Cheese', price: 20, isAvailable: true },
-  { id: 'addon-topping', name: 'Extra Topping', price: 30, isAvailable: true },
-  { id: 'addon-dip', name: 'Cheesy Dip', price: 25, isAvailable: true },
-  { id: 'addon-jalapeno', name: 'Jalapeno & Olives', price: 25, isAvailable: true },
-  { id: 'addon-periperi', name: 'Peri Peri Seasoning', price: 15, isAvailable: true },
-  { id: 'addon-sauce', name: 'Spicy Chipotle Sauce', price: 20, isAvailable: true },
+export const DEFAULT_GLOBAL_ADDONS: GlobalAddon[] = [
+  { id: 'addon-cheese', name: 'Extra Cheese', price: 20, isAvailable: true, applicableSections: ['Pizzas', 'Burgers', 'Sandwiches', 'Pastas', 'Maggies'] },
+  { id: 'addon-topping', name: 'Extra Topping', price: 30, isAvailable: true, applicableSections: ['Pizzas'] },
+  { id: 'addon-dip', name: 'Cheesy Dip', price: 25, isAvailable: true, applicableSections: ['Pizzas', 'Burgers', 'French Fries', 'Sides', 'Wraps'] },
+  { id: 'addon-jalapeno', name: 'Jalapeno & Olives', price: 25, isAvailable: true, applicableSections: ['Pizzas', 'Burgers', 'Sandwiches', 'Pastas'] },
+  { id: 'addon-periperi', name: 'Peri Peri Seasoning', price: 15, isAvailable: true, applicableSections: ['French Fries', 'Sides', 'Burgers'] },
+  { id: 'addon-sauce', name: 'Spicy Chipotle Sauce', price: 20, isAvailable: true, applicableSections: ['Burgers', 'Sandwiches', 'French Fries', 'Sides', 'Wraps'] },
 ];
 
 export const DEFAULT_RECIPES: RecipeMapping[] = [
