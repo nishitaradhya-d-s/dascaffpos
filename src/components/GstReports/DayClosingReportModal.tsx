@@ -30,14 +30,14 @@ export const DayClosingReportModal: React.FC<DayClosingReportModalProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [recipientPhone, setRecipientPhone] = useState(
-    settings.contactPhone ? settings.contactPhone.replace(/\D/g, '') : ''
+    settings.phone ? settings.phone.replace(/\D/g, '') : ''
   );
 
   React.useEffect(() => {
-    if (isOpen && settings.contactPhone) {
-      setRecipientPhone(settings.contactPhone.replace(/\D/g, ''));
+    if (isOpen && settings.phone) {
+      setRecipientPhone(settings.phone.replace(/\D/g, ''));
     }
-  }, [isOpen, settings.contactPhone]);
+  }, [isOpen, settings.phone]);
 
   if (!isOpen) return null;
 

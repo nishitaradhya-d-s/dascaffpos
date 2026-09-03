@@ -21,7 +21,7 @@ interface BillDetailModalProps {
   bill: BillRecord;
   settings: CafeSettings;
   onClose: () => void;
-  onDeleteBill: (billId: string) => void;
+  onDeleteBill?: (billId: string) => void;
 }
 
 export const BillDetailModal: React.FC<BillDetailModalProps> = ({
@@ -174,7 +174,7 @@ export const BillDetailModal: React.FC<BillDetailModalProps> = ({
                     )}
                     {item.comboSelections && item.comboSelections.length > 0 && (
                       <div className="pl-6 text-[10.5px] text-gray-700">
-                        {item.comboSelections.map((cs) => `• ${cs.selectedOptionName}`).join(' ')}
+                        {item.comboSelections.map((cs) => `• ${cs.selectedName}`).join(' ')}
                       </div>
                     )}
                   </div>
